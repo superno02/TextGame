@@ -1,0 +1,144 @@
+{
+    "guilds": [
+        {
+            "id": "none",
+            "name": "無業遊民",
+            "description": "沒有加入任何公會的冒險者，雖然不受限制，但也無法獲得專屬技能的指導。",
+            "baseStats": {
+                "strength": 10,
+                "agility": 10,
+                "constitution": 10,
+                "intelligence": 10,
+                "wisdom": 10,
+                "charisma": 10
+            },
+            "primarySkills": [],
+            "secondarySkills": [],
+            "forbiddenSkills": [],
+            "healthFormula": {
+                "base": 50,
+                "perConstitution": 5
+            },
+            "manaFormula": {
+                "base": 20,
+                "perIntelligence": 3
+            },
+            "staminaFormula": {
+                "base": 30,
+                "perStrength": 2
+            }
+        },
+        {
+            "id": "warrior",
+            "name": "戰士",
+            "description": "以武力為主的職業，擅長近戰武器與重型防具。戰士擁有最高的體質與力量，是隊伍中的堅實前鋒。",
+            "baseStats": {
+                "strength": 14,
+                "agility": 12,
+                "constitution": 14,
+                "intelligence": 8,
+                "wisdom": 8,
+                "charisma": 10
+            },
+            "primarySkills": ["sword", "axe", "heavyArmor", "shield"],
+            "secondarySkills": ["lightArmor", "evasion", "firstAid"],
+            "forbiddenSkills": ["primaryMagic", "harness", "attunement"],
+            "healthFormula": {
+                "base": 60,
+                "perConstitution": 6
+            },
+            "manaFormula": {
+                "base": 10,
+                "perIntelligence": 2
+            },
+            "staminaFormula": {
+                "base": 40,
+                "perStrength": 3
+            }
+        },
+        {
+            "id": "mage",
+            "name": "法師",
+            "description": "精通魔法的學者，以智力與智慧為核心屬性。雖然身體較為脆弱，但強大的魔法足以彌補這個缺點。",
+            "baseStats": {
+                "strength": 8,
+                "agility": 10,
+                "constitution": 8,
+                "intelligence": 16,
+                "wisdom": 14,
+                "charisma": 10
+            },
+            "primarySkills": ["staff", "primaryMagic", "harness", "attunement"],
+            "secondarySkills": ["scholarship", "appraisal", "perception"],
+            "forbiddenSkills": ["heavyArmor", "shield"],
+            "healthFormula": {
+                "base": 40,
+                "perConstitution": 4
+            },
+            "manaFormula": {
+                "base": 30,
+                "perIntelligence": 5
+            },
+            "staminaFormula": {
+                "base": 20,
+                "perStrength": 2
+            }
+        },
+        {
+            "id": "thief",
+            "name": "盜賊",
+            "description": "敏捷至上的職業，擅長潛行、開鎖與快速打擊。盜賊在陰影中行動，以速度和技巧取勝。",
+            "baseStats": {
+                "strength": 10,
+                "agility": 16,
+                "constitution": 10,
+                "intelligence": 12,
+                "wisdom": 8,
+                "charisma": 10
+            },
+            "primarySkills": ["dagger", "stealth", "lockpick", "evasion"],
+            "secondarySkills": ["bow", "lightArmor", "perception", "trading"],
+            "forbiddenSkills": ["heavyArmor", "shield"],
+            "healthFormula": {
+                "base": 45,
+                "perConstitution": 5
+            },
+            "manaFormula": {
+                "base": 15,
+                "perIntelligence": 2
+            },
+            "staminaFormula": {
+                "base": 35,
+                "perStrength": 3
+            }
+        },
+        {
+            "id": "cleric",
+            "name": "牧師",
+            "description": "信仰之力的引導者，擅長治癒與防護。牧師以智慧為核心，能在戰鬥中為隊友提供強大的支援。",
+            "baseStats": {
+                "strength": 10,
+                "agility": 8,
+                "constitution": 12,
+                "intelligence": 10,
+                "wisdom": 16,
+                "charisma": 10
+            },
+            "primarySkills": ["staff", "primaryMagic", "firstAid", "attunement"],
+            "secondarySkills": ["lightArmor", "shield", "scholarship", "teaching"],
+            "forbiddenSkills": ["dagger", "stealth", "lockpick"],
+            "healthFormula": {
+                "base": 55,
+                "perConstitution": 5
+            },
+            "manaFormula": {
+                "base": 25,
+                "perIntelligence": 4
+            },
+            "staminaFormula": {
+                "base": 30,
+                "perStrength": 2
+            }
+        }
+    ]
+}

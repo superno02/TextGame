@@ -1,0 +1,74 @@
+{
+    "scenes": [
+        {
+            "id": "village",
+            "name": "村莊",
+            "description": "一個寧靜的小村莊，四周圍繞著低矮的木柵欄。村民們在街道上來來往往，空氣中瀰漫著炊煙的氣味。",
+            "exits": [
+                { "label": "前往後山", "destinationId": "mountain" },
+                { "label": "前往市集", "destinationId": "market" },
+                { "label": "前往村口", "destinationId": "village_gate" }
+            ],
+            "monsters": [],
+            "npcs": ["village_elder", "wandering_merchant"],
+            "isRestArea": true
+        },
+        {
+            "id": "market",
+            "name": "市集",
+            "description": "熱鬧的露天市集，攤販們的叫賣聲此起彼落。各式各樣的商品琳瑯滿目，從武器防具到藥草食材應有盡有。",
+            "exits": [
+                { "label": "回到村莊", "destinationId": "village" }
+            ],
+            "monsters": [],
+            "npcs": ["blacksmith", "potion_merchant", "armor_merchant"],
+            "isRestArea": true
+        },
+        {
+            "id": "village_gate",
+            "name": "村口",
+            "description": "村莊的入口處，一條泥土路向遠方延伸。守衛站在門旁，警惕地注視著來往的行人。",
+            "exits": [
+                { "label": "回到村莊", "destinationId": "village" },
+                { "label": "前往林間小路", "destinationId": "forest_path" }
+            ],
+            "monsters": [],
+            "npcs": ["gate_guard"],
+            "isRestArea": true
+        },
+        {
+            "id": "mountain",
+            "name": "後山",
+            "description": "村莊後方的山林小徑，樹木茂密，偶爾傳來野獸的叫聲。這裡是新手冒險者磨練技術的好地方。",
+            "exits": [
+                { "label": "回到村莊", "destinationId": "village" },
+                { "label": "深入山林", "destinationId": "deep_mountain" }
+            ],
+            "monsters": ["rabbit", "chicken"],
+            "npcs": [],
+            "isRestArea": false
+        },
+        {
+            "id": "deep_mountain",
+            "name": "深山",
+            "description": "山林深處，光線漸暗，腳下的路越來越難行。空氣中帶著潮濕的泥土氣息，隱約可以聽到溪水的聲音。",
+            "exits": [
+                { "label": "回到後山", "destinationId": "mountain" }
+            ],
+            "monsters": ["wild_boar", "wolf"],
+            "npcs": ["hermit"],
+            "isRestArea": false
+        },
+        {
+            "id": "forest_path",
+            "name": "林間小路",
+            "description": "一條蜿蜒穿過樹林的小路，兩旁的灌木叢中偶爾傳出窸窣聲。陽光從樹葉的縫隙間灑落。",
+            "exits": [
+                { "label": "回到村口", "destinationId": "village_gate" }
+            ],
+            "monsters": ["rabbit", "wild_boar"],
+            "npcs": [],
+            "isRestArea": false
+        }
+    ]
+}

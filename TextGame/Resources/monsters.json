@@ -1,0 +1,60 @@
+{
+    "monsters": [
+        {
+            "id": "rabbit",
+            "name": "兔子",
+            "description": "一隻毛色灰白的野兔，看起來很機警。雖然不具威脅性，但動作敏捷。",
+            "icon": "hare",
+            "level": 1,
+            "health": 15,
+            "attack": 2,
+            "defense": 1,
+            "experience": 5,
+            "loot": [
+                { "itemId": "rabbit_hide", "dropRate": 0.5 }
+            ],
+            "spawnScenes": ["mountain", "forest_path"]
+        },
+        {
+            "id": "chicken",
+            "name": "雞",
+            "description": "一隻在路邊覓食的野雞，完全沒有戒心。是最容易對付的生物。",
+            "icon": "bird",
+            "level": 1,
+            "health": 10,
+            "attack": 1,
+            "defense": 0,
+            "experience": 3,
+            "loot": [
+                { "itemId": "chicken_feather", "dropRate": 0.6 }
+            ],
+            "spawnScenes": ["mountain"]
+        },
+        {
+            "id": "wild_boar",
+            "name": "野豬",
+            "description": "一頭體型壯碩的野豬，正在用獠牙翻掘泥土。受到驚嚇時會變得極具攻擊性。",
+            "icon": "pawprint.fill",
+            "level": 3,
+            "health": 40,
+            "attack": 8,
+            "defense": 4,
+            "experience": 15,
+            "loot": [],
+            "spawnScenes": ["deep_mountain", "forest_path"]
+        },
+        {
+            "id": "wolf",
+            "name": "灰狼",
+            "description": "一匹目光銳利的灰狼，正低伏著身體注視著四周。牠的動作迅捷而致命。",
+            "icon": "dog.fill",
+            "level": 4,
+            "health": 35,
+            "attack": 10,
+            "defense": 3,
+            "experience": 20,
+            "loot": [],
+            "spawnScenes": ["deep_mountain"]
+        }
+    ]
+}

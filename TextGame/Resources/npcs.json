@@ -1,0 +1,174 @@
+{
+    "npcs": [
+        {
+            "id": "village_elder",
+            "name": "村長老伯",
+            "title": "村莊長老",
+            "description": "一位白髮蒼蒼的老人，臉上刻滿了歲月的痕跡。他是這個村莊最受敬重的人物。",
+            "icon": "person.fill",
+            "type": "questGiver",
+            "dialogues": [
+                {
+                    "id": "greeting",
+                    "text": "年輕人，歡迎來到我們的村莊。這裡雖然不大，但也是個安身立命的好地方。",
+                    "condition": null
+                },
+                {
+                    "id": "advice",
+                    "text": "如果你想磨練自己的本事，可以去後山看看。那裡有些小動物，適合新手練習。",
+                    "condition": null
+                }
+            ],
+            "shopItems": [],
+            "services": ["quest"]
+        },
+        {
+            "id": "wandering_merchant",
+            "name": "旅行商人",
+            "title": "旅行商人",
+            "description": "一個背著碩大背包的商人，他的眼中閃爍著精明的光芒。據說他走遍了大陸的每個角落。",
+            "icon": "bag.fill",
+            "type": "merchant",
+            "dialogues": [
+                {
+                    "id": "greeting",
+                    "text": "嘿，來看看我的好東西吧！都是從各地蒐集來的珍品。",
+                    "condition": null
+                },
+                {
+                    "id": "farewell",
+                    "text": "下次再來光顧啊！我經常在這附近走動。",
+                    "condition": null
+                }
+            ],
+            "shopItems": [
+                { "itemId": "small_healing_potion", "stock": -1, "priceMultiplier": 1.0 },
+                { "itemId": "mana_potion", "stock": -1, "priceMultiplier": 1.0 },
+                { "itemId": "stamina_herb", "stock": -1, "priceMultiplier": 1.2 }
+            ],
+            "services": ["buy", "sell"]
+        },
+        {
+            "id": "blacksmith",
+            "name": "鐵匠老張",
+            "title": "鐵匠",
+            "description": "一個身材魁梧的中年人，赤裸的上臂滿是燒傷的痕跡。他正在熟練地敲打著鐵砧上的金屬。",
+            "icon": "hammer.fill",
+            "type": "merchant",
+            "dialogues": [
+                {
+                    "id": "greeting",
+                    "text": "需要武器嗎？我打的劍可是這一帶最好的！",
+                    "condition": null
+                },
+                {
+                    "id": "warrior_greeting",
+                    "text": "喔，是戰士啊！我這裡有些適合你的好東西。",
+                    "condition": "guild:warrior"
+                }
+            ],
+            "shopItems": [
+                { "itemId": "iron_sword", "stock": 3, "priceMultiplier": 1.0 },
+                { "itemId": "rusty_dagger", "stock": 5, "priceMultiplier": 0.8 },
+                { "itemId": "short_bow", "stock": 2, "priceMultiplier": 1.0 },
+                { "itemId": "wooden_shield", "stock": 2, "priceMultiplier": 1.0 },
+                { "itemId": "warrior_greatsword", "stock": 1, "priceMultiplier": 1.5 }
+            ],
+            "services": ["buy", "sell"]
+        },
+        {
+            "id": "potion_merchant",
+            "name": "藥婆",
+            "title": "藥草師",
+            "description": "一個披著草綠色斗篷的老婦人，身上散發著各種草藥混合的氣味。她的攤位上擺滿了瓶瓶罐罐。",
+            "icon": "cross.vial.fill",
+            "type": "merchant",
+            "dialogues": [
+                {
+                    "id": "greeting",
+                    "text": "來來來，看看我的藥水。不管是治傷還是恢復魔力，我這裡都有。",
+                    "condition": null
+                }
+            ],
+            "shopItems": [
+                { "itemId": "small_healing_potion", "stock": -1, "priceMultiplier": 0.9 },
+                { "itemId": "mana_potion", "stock": -1, "priceMultiplier": 0.9 },
+                { "itemId": "stamina_herb", "stock": -1, "priceMultiplier": 0.8 }
+            ],
+            "services": ["buy"]
+        },
+        {
+            "id": "armor_merchant",
+            "name": "皮匠阿福",
+            "title": "皮甲商人",
+            "description": "一個手指佈滿繭的男人，正在仔細地縫製一件皮革護甲。他的攤位上掛滿了各式防具。",
+            "icon": "shield.fill",
+            "type": "merchant",
+            "dialogues": [
+                {
+                    "id": "greeting",
+                    "text": "好的防具能救你一命！來看看我的貨色吧。",
+                    "condition": null
+                }
+            ],
+            "shopItems": [
+                { "itemId": "leather_armor", "stock": 2, "priceMultiplier": 1.0 },
+                { "itemId": "iron_helm", "stock": 3, "priceMultiplier": 1.0 },
+                { "itemId": "cloth_boots", "stock": 5, "priceMultiplier": 1.0 },
+                { "itemId": "mage_robe", "stock": 1, "priceMultiplier": 1.5 }
+            ],
+            "services": ["buy", "sell"]
+        },
+        {
+            "id": "gate_guard",
+            "name": "守衛阿強",
+            "title": "村口守衛",
+            "description": "一個穿著簡陋鎧甲的年輕人，手持長矛站在村口。雖然看起來有些緊張，但態度十分認真。",
+            "icon": "shield.lefthalf.filled",
+            "type": "guard",
+            "dialogues": [
+                {
+                    "id": "greeting",
+                    "text": "注意安全，村外的路上偶爾會有野獸出沒。",
+                    "condition": null
+                },
+                {
+                    "id": "warning",
+                    "text": "前面的林間小路最近出現了野豬，如果實力不夠的話要小心。",
+                    "condition": null
+                }
+            ],
+            "shopItems": [],
+            "services": ["info"]
+        },
+        {
+            "id": "hermit",
+            "name": "隱居老者",
+            "title": "山中隱士",
+            "description": "一個衣衫襤褸卻氣質不凡的老者，盤坐在一塊巨石上。他的眼神深邃，彷彿能看穿一切。",
+            "icon": "figure.mind.and.body",
+            "type": "trainer",
+            "dialogues": [
+                {
+                    "id": "greeting",
+                    "text": "能找到這裡來，說明你有些本事。想學點什麼嗎？",
+                    "condition": null
+                },
+                {
+                    "id": "mage_greeting",
+                    "text": "我感受到你身上有魔力的波動……你是法師吧？我可以教你一些進階的技巧。",
+                    "condition": "guild:mage"
+                },
+                {
+                    "id": "cleric_greeting",
+                    "text": "信仰之力……你是一位牧師。也許我能幫你領悟更深層的智慧。",
+                    "condition": "guild:cleric"
+                }
+            ],
+            "shopItems": [
+                { "itemId": "wooden_staff", "stock": 1, "priceMultiplier": 0.7 }
+            ],
+            "services": ["train", "buy"]
+        }
+    ]
+}
