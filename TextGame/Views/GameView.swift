@@ -12,96 +12,83 @@ import SwiftData
 struct GameView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
-    @Query(sort: \SaveSlot.slotIndex) private var saveSlots: [SaveSlot]
 
     // MARK: - 存檔槽位
+
     let slotIndex: Int
 
-    // MARK: - 訊息列表（上限 50 筆）
-    @State private var messages: [String] = ["歡迎來到 TextGame 的世界。"]
+    // MARK: - 遊戲引擎
 
-    // MARK: - 場景狀態
-    @State private var currentSceneId: String = "village"
-
-    // MARK: - 彈窗控制
-    @State private var showMoveSheet = false
-    @State private var showAttackSheet = false
-    @State private var showTalkSheet = false
-
-    // MARK: - 場景與怪物資料（從 JSON 載入）
-
-    private let scenes: [String: GameScene] = SceneTemplateLoader.shared.allGameScenes()
-    private let sceneLoader = SceneTemplateLoader.shared
-    private let monsterLoader = MonsterTemplateLoader.shared
-    private let npcLoader = NPCTemplateLoader.shared
-
-    // MARK: - 計算屬性
-
-    private var currentScene: GameScene {
-        scenes[currentSceneId] ?? scenes["village"]!
-    }
-
-    private var currentSaveSlot: SaveSlot? {
-        saveSlots.first { $0.slotIndex == slotIndex }
-    }
-
-    /// 目前場景中可攻擊的怪物列表
-    private var availableMonsters: [MonsterTemplate] {
-        monsterLoader.monstersInScene(currentSceneId)
-    }
-
-    /// 目前場景可前往的地點
-    private var availableExits: [SceneExit] {
-        currentScene.exits
-    }
-
-    /// 目前場景中可談話的 NPC 列表
-    private var availableNPCs: [NPCTemplate] {
-        let npcIds = sceneLoader.npcIdsInScene(currentSceneId)
-        return npcLoader.templates(for: npcIds)
-    }
+    @State private var engine: GameEngine?
 
     // MARK: - Body
 
     var body: some View {
+        Group {
+            if let engine {
+                gameContent(engine: engine)
+            } else {
+                ProgressView("載入中…")
+            }
+        }
+        .task {
+            if engine == nil {
+                engine = GameEngine(slotIndex: slotIndex, modelContext: modelContext)
+            }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .inactive {
+                engine?.saveGame()
+            }
+        }
+    }
+
+    // MARK: - 遊戲主內容
+
+    @ViewBuilder
+    private func gameContent(engine: GameEngine) -> some View {
         VStack(spacing: 0) {
             // 上半部：訊息輸出區域
-            messageListView
+            messageListView(engine: engine)
 
             Divider()
 
             // 下半部：操作按鈕區域
-            actionButtonsView
+            actionButtonsView(engine: engine)
         }
-        .navigationTitle(currentScene.name)
+        .navigationTitle(engine.currentScene.name)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .sheet(isPresented: $showMoveSheet) {
-            moveSheet
+        .sheet(isPresented: Binding(
+            get: { engine.showMoveSheet },
+            set: { engine.showMoveSheet = $0 }
+        )) {
+            moveSheet(engine: engine)
         }
-        .sheet(isPresented: $showAttackSheet) {
-            attackSheet
+        .sheet(isPresented: Binding(
+            get: { engine.showAttackSheet },
+            set: { engine.showAttackSheet = $0 }
+        )) {
+            attackSheet(engine: engine)
         }
-        .sheet(isPresented: $showTalkSheet) {
-            talkSheet
+        .sheet(isPresented: Binding(
+            get: { engine.showTalkSheet },
+            set: { engine.showTalkSheet = $0 }
+        )) {
+            talkSheet(engine: engine)
         }
         .onAppear {
-            appendMessage(currentScene.description)
-        }
-        .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .inactive {
-                saveGame()
-            }
+            engine.onAppear()
         }
     }
 
     // MARK: - 訊息列表
 
-    private var messageListView: some View {
+    private func messageListView(engine: GameEngine) -> some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 6) {
-                    ForEach(Array(messages.enumerated()), id: \.offset) { index, message in
+                    ForEach(Array(engine.messages.enumerated()), id: \.offset) { index, message in
                         Text(message)
                             .font(.system(.body, design: .monospaced))
                             .foregroundColor(messageColor(for: message))
@@ -110,9 +97,9 @@ struct GameView: View {
                 }
                 .padding()
             }
-            .onChange(of: messages.count) {
+            .onChange(of: engine.messages.count) {
                 withAnimation {
-                    if let lastIndex = messages.indices.last {
+                    if let lastIndex = engine.messages.indices.last {
                         proxy.scrollTo(lastIndex, anchor: .bottom)
                     }
                 }
@@ -124,49 +111,57 @@ struct GameView: View {
 
     // MARK: - 操作按鈕
 
-    private var actionButtonsView: some View {
+    private func actionButtonsView(engine: GameEngine) -> some View {
         VStack(spacing: 12) {
             // 第一排：移動、攻擊、談話
             HStack(spacing: 12) {
                 actionButton(icon: "figure.walk", title: "移動") {
-                    showMoveSheet = true
+                    if engine.isInCombat {
+                        engine.appendMessage("戰鬥中無法移動！")
+                    } else {
+                        engine.showMoveSheet = true
+                    }
                 }
 
                 actionButton(icon: "burst.fill", title: "攻擊") {
-                    if availableMonsters.isEmpty {
-                        appendMessage("這裡沒有可以攻擊的目標。")
+                    if engine.isInCombat {
+                        engine.appendMessage("你正在戰鬥中！")
+                    } else if engine.availableMonsters.isEmpty {
+                        engine.appendMessage("這裡沒有可以攻擊的目標。")
                     } else {
-                        showAttackSheet = true
+                        engine.showAttackSheet = true
                     }
                 }
 
                 actionButton(icon: "bubble.left.fill", title: "談話") {
-                    if availableNPCs.isEmpty {
-                        appendMessage("這裡沒有可以交談的對象。")
+                    if engine.availableNPCs.isEmpty {
+                        engine.appendMessage("這裡沒有可以交談的對象。")
                     } else {
-                        showTalkSheet = true
+                        engine.showTalkSheet = true
                     }
                 }
             }
 
             // 第二排：技能、物品、屬性
             HStack(spacing: 12) {
-                NavigationLink {
-                    SkillView()
-                } label: {
-                    actionButtonLabel(icon: "flame.fill", title: "技能")
-                }
+                if let character = engine.currentSaveSlot?.character {
+                    NavigationLink {
+                        SkillView(character: character)
+                    } label: {
+                        actionButtonLabel(icon: "flame.fill", title: "技能")
+                    }
 
-                NavigationLink {
-                    InventoryView()
-                } label: {
-                    actionButtonLabel(icon: "bag.fill", title: "物品")
-                }
+                    NavigationLink {
+                        InventoryView(character: character)
+                    } label: {
+                        actionButtonLabel(icon: "bag.fill", title: "物品")
+                    }
 
-                NavigationLink {
-                    StatusView()
-                } label: {
-                    actionButtonLabel(icon: "person.fill", title: "屬性")
+                    NavigationLink {
+                        StatusView(character: character)
+                    } label: {
+                        actionButtonLabel(icon: "person.fill", title: "屬性")
+                    }
                 }
             }
         }
@@ -199,12 +194,12 @@ struct GameView: View {
 
     // MARK: - 移動彈窗
 
-    private var moveSheet: some View {
+    private func moveSheet(engine: GameEngine) -> some View {
         NavigationStack {
-            List(availableExits) { exit in
+            List(engine.availableExits) { exit in
                 Button {
-                    moveToScene(exit.destinationId)
-                    showMoveSheet = false
+                    engine.moveToScene(exit.destinationId)
+                    engine.showMoveSheet = false
                 } label: {
                     Label(exit.label, systemImage: "arrow.right.circle")
                 }
@@ -214,7 +209,7 @@ struct GameView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
-                        showMoveSheet = false
+                        engine.showMoveSheet = false
                     }
                 }
             }
@@ -224,14 +219,23 @@ struct GameView: View {
 
     // MARK: - 攻擊彈窗
 
-    private var attackSheet: some View {
+    private func attackSheet(engine: GameEngine) -> some View {
         NavigationStack {
-            List(availableMonsters) { monster in
+            List(engine.availableMonsters) { monster in
                 Button {
-                    attackMonster(monster)
-                    showAttackSheet = false
+                    engine.attackMonster(monster)
+                    engine.showAttackSheet = false
                 } label: {
-                    Label(monster.name, systemImage: monster.icon)
+                    Label {
+                        VStack(alignment: .leading) {
+                            Text(monster.name)
+                            Text("等級 \(monster.level) | HP \(monster.health)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: monster.icon)
+                    }
                 }
             }
             .navigationTitle("選擇目標")
@@ -239,7 +243,7 @@ struct GameView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
-                        showAttackSheet = false
+                        engine.showAttackSheet = false
                     }
                 }
             }
@@ -249,12 +253,12 @@ struct GameView: View {
 
     // MARK: - 談話彈窗
 
-    private var talkSheet: some View {
+    private func talkSheet(engine: GameEngine) -> some View {
         NavigationStack {
-            List(availableNPCs) { npc in
+            List(engine.availableNPCs) { npc in
                 Button {
-                    talkToNPC(npc)
-                    showTalkSheet = false
+                    engine.talkToNPC(npc)
+                    engine.showTalkSheet = false
                 } label: {
                     HStack {
                         Label(npc.name, systemImage: npc.icon)
@@ -270,7 +274,7 @@ struct GameView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") {
-                        showTalkSheet = false
+                        engine.showTalkSheet = false
                     }
                 }
             }
@@ -278,65 +282,26 @@ struct GameView: View {
         .presentationDetents([.medium])
     }
 
-    // MARK: - 動作處理
-
-    private func moveToScene(_ sceneId: String) {
-        guard let scene = scenes[sceneId] else { return }
-        currentSceneId = sceneId
-        // 同步更新角色位置
-        if let character = currentSaveSlot?.character {
-            character.currentSceneId = sceneId
-        }
-        appendMessage("——————————")
-        appendMessage("你來到了【\(scene.name)】")
-        appendMessage(scene.description)
-    }
-
-    private func attackMonster(_ monster: MonsterTemplate) {
-        appendMessage("你對\(monster.name)發起了攻擊！")
-        // TODO: 接入戰鬥系統
-        appendMessage("\(monster.name)受到了傷害。")
-    }
-
-    private func talkToNPC(_ npc: NPCTemplate) {
-        let playerGuild = currentSaveSlot?.character?.guild
-        let dialogues = npc.availableDialogues(playerGuild: playerGuild)
-
-        appendMessage("——————————")
-        appendMessage("你向【\(npc.name)】搭話。")
-
-        if dialogues.isEmpty {
-            appendMessage("\(npc.name)看了你一眼，沒有說話。")
-        } else {
-            // 隨機選擇一段符合條件的對話
-            if let dialogue = dialogues.randomElement() {
-                appendMessage("「\(dialogue.text)」")
-            }
-        }
-    }
-
-    // MARK: - 存檔
-
-    private func saveGame() {
-        guard let slot = currentSaveSlot, let character = slot.character else { return }
-        slot.updateSaveInfo(character: character, playTime: slot.playTime)
-        try? modelContext.save()
-    }
-
-    // MARK: - 訊息管理
-
-    /// 添加訊息，超過 50 筆時移除最舊的
-    private func appendMessage(_ text: String) {
-        messages.append(text)
-        if messages.count > 50 {
-            messages.removeFirst(messages.count - 50)
-        }
-    }
+    // MARK: - 訊息顏色（純 UI 邏輯）
 
     /// 根據訊息內容決定文字顏色
     private func messageColor(for message: String) -> Color {
-        if message.hasPrefix("你對") || message.contains("攻擊") {
+        if message.hasPrefix("[系統錯誤]") {
             return .red
+        } else if message.contains("倒下了") {
+            return .orange
+        } else if message.contains("擊敗了") || message.contains("意識逐漸模糊") || message.contains("醒來") {
+            return .purple
+        } else if message.hasPrefix("你獲得了") {
+            return .yellow
+        } else if message.contains("閃開了") {
+            return .mint
+        } else if message.hasPrefix("你對") || message.contains("發起了攻擊") {
+            return .red
+        } else if message.contains("造成了") && message.contains("點傷害") {
+            return .red
+        } else if message.contains("攻擊被") || message.contains("攻擊落空") {
+            return .orange
         } else if message.hasPrefix("你來到了") {
             return .blue
         } else if message.hasPrefix("你向【") {
@@ -345,6 +310,10 @@ struct GameView: View {
             return .green
         } else if message.hasPrefix("——") {
             return .secondary
+        } else if message.contains("逃跑") || message.contains("脫離了戰鬥") {
+            return .teal
+        } else if message.contains("體力耗盡") || message.contains("太累了") {
+            return .orange
         }
         return .primary
     }

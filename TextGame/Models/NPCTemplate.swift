@@ -82,14 +82,19 @@ final class NPCTemplateLoader {
     /// 所有 NPC 模板，以 id 為 key
     private(set) var templates: [String: NPCTemplate] = [:]
 
+    /// 載入錯誤訊息（nil 表示載入成功）
+    private(set) var loadError: String?
+
     private init() {
         loadTemplates()
     }
 
     /// 從 Bundle 載入 npcs.json
     private func loadTemplates() {
+        loadError = nil
         guard let url = Bundle.main.url(forResource: "npcs", withExtension: "json") else {
-            print("[NPCTemplateLoader] 找不到 npcs.json")
+            loadError = "找不到 npcs.json"
+            print("[NPCTemplateLoader] \(loadError!)")
             return
         }
 
@@ -100,7 +105,8 @@ final class NPCTemplateLoader {
             templates = Dictionary(uniqueKeysWithValues: container.npcs.map { ($0.id, $0) })
             print("[NPCTemplateLoader] 已載入 \(templates.count) 個 NPC 模板")
         } catch {
-            print("[NPCTemplateLoader] 載入 npcs.json 失敗：\(error)")
+            loadError = "載入 npcs.json 失敗：\(error.localizedDescription)"
+            print("[NPCTemplateLoader] \(loadError!)")
         }
     }
 

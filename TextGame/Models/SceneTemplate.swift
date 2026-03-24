@@ -56,14 +56,19 @@ final class SceneTemplateLoader {
     /// 所有場景模板，以 id 為 key
     private(set) var sceneTemplates: [String: SceneTemplate] = [:]
 
+    /// 載入錯誤訊息（nil 表示載入成功）
+    private(set) var loadError: String?
+
     private init() {
         loadData()
     }
 
     /// 從 Bundle 載入 scenes.json
     private func loadData() {
+        loadError = nil
         guard let url = Bundle.main.url(forResource: "scenes", withExtension: "json") else {
-            print("[SceneTemplateLoader] 找不到 scenes.json")
+            loadError = "找不到 scenes.json"
+            print("[SceneTemplateLoader] \(loadError!)")
             return
         }
 
@@ -74,7 +79,8 @@ final class SceneTemplateLoader {
             sceneTemplates = Dictionary(uniqueKeysWithValues: container.scenes.map { ($0.id, $0) })
             print("[SceneTemplateLoader] 已載入 \(sceneTemplates.count) 個場景")
         } catch {
-            print("[SceneTemplateLoader] 載入 scenes.json 失敗：\(error)")
+            loadError = "載入 scenes.json 失敗：\(error.localizedDescription)"
+            print("[SceneTemplateLoader] \(loadError!)")
         }
     }
 

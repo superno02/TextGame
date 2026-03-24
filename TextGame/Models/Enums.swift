@@ -75,6 +75,22 @@ enum SkillType: String, Codable, CaseIterable {
     case harness = "聚能"
     case attunement = "調諧"
 
+    /// 根據武器 itemId 推導對應的武器技能類型
+    static func weaponSkillType(for itemId: String) -> SkillType? {
+        switch itemId {
+        case "iron_sword", "warrior_greatsword":
+            return .sword
+        case "short_bow":
+            return .bow
+        case "wooden_staff":
+            return .staff
+        case "rusty_dagger":
+            return .dagger
+        default:
+            return nil
+        }
+    }
+
     /// 此技能所屬的分類
     var category: SkillCategory {
         switch self {

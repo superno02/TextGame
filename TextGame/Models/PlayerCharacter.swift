@@ -49,6 +49,44 @@ final class PlayerCharacter {
     // MARK: - 目前位置
     var currentSceneId: String
 
+    // MARK: - 戰鬥輔助屬性
+
+    /// 目前裝備的武器
+    @Transient
+    var equippedWeapon: GameItem? {
+        inventory.first { $0.isEquipped && $0.itemType == .weapon }
+    }
+
+    /// 目前裝備的所有防具
+    @Transient
+    var equippedArmor: [GameItem] {
+        inventory.filter { $0.isEquipped && $0.itemType == .armor }
+    }
+
+    /// 總攻擊力 = 力量 + 武器攻擊力
+    @Transient
+    var totalAttackPower: Int {
+        strength + (equippedWeapon?.attackPower ?? 0)
+    }
+
+    /// 總防禦力 = 所有已裝備防具的防禦力之和
+    @Transient
+    var totalDefensePower: Int {
+        equippedArmor.reduce(0) { $0 + $1.defensePower }
+    }
+
+    /// 根據裝備武器推導對應的武器技能類型
+    @Transient
+    var weaponSkillType: SkillType? {
+        guard let weapon = equippedWeapon else { return nil }
+        return SkillType.weaponSkillType(for: weapon.itemId)
+    }
+
+    /// 查找特定技能
+    func skill(for type: SkillType) -> Skill? {
+        skills.first { $0.type == type }
+    }
+
     // MARK: - 初始化
 
     init(name: String, guild: Guild) {
@@ -57,44 +95,19 @@ final class PlayerCharacter {
         self.circle = 1
         self.currentSceneId = "village"
 
-        // 根據職業設定初始屬性
-        switch guild {
-        case .none:
-            self.strength = 10
-            self.agility = 10
-            self.constitution = 10
-            self.intelligence = 10
-            self.wisdom = 10
-            self.charisma = 10
-        case .warrior:
-            self.strength = 14
-            self.agility = 12
-            self.constitution = 14
-            self.intelligence = 8
-            self.wisdom = 8
-            self.charisma = 10
-        case .mage:
-            self.strength = 8
-            self.agility = 10
-            self.constitution = 8
-            self.intelligence = 16
-            self.wisdom = 14
-            self.charisma = 10
-        case .thief:
-            self.strength = 10
-            self.agility = 16
-            self.constitution = 10
-            self.intelligence = 12
-            self.wisdom = 8
-            self.charisma = 10
-        case .cleric:
-            self.strength = 10
-            self.agility = 8
-            self.constitution = 12
-            self.intelligence = 10
-            self.wisdom = 16
-            self.charisma = 10
-        }
+        // 從職業模板取得基礎屬性，找不到時使用 fallback 預設值
+        let template = GuildTemplateLoader.shared.template(for: guild)
+        let stats = template?.baseStats ?? GuildBaseStats(
+            strength: 10, agility: 10, constitution: 10,
+            intelligence: 10, wisdom: 10, charisma: 10
+        )
+
+        self.strength = stats.strength
+        self.agility = stats.agility
+        self.constitution = stats.constitution
+        self.intelligence = stats.intelligence
+        self.wisdom = stats.wisdom
+        self.charisma = stats.charisma
 
         // 初始狀態值（先設定預設值，再計算）
         self.maxHealth = 0
@@ -104,12 +117,19 @@ final class PlayerCharacter {
         self.maxStamina = 0
         self.currentStamina = 0
 
-        // 根據屬性計算狀態值
-        self.maxHealth = 50 + self.constitution * 5
+        // 使用職業公式計算狀態值，找不到模板時使用 fallback 公式
+        if let template {
+            self.maxHealth = template.healthFormula.calculate(attributeValue: self.constitution)
+            self.maxMana = template.manaFormula.calculate(attributeValue: self.intelligence)
+            self.maxStamina = template.staminaFormula.calculate(attributeValue: self.strength)
+        } else {
+            self.maxHealth = 50 + self.constitution * 5
+            self.maxMana = 20 + self.intelligence * 3
+            self.maxStamina = 30 + self.strength * 2
+        }
+
         self.currentHealth = self.maxHealth
-        self.maxMana = 20 + self.intelligence * 3
         self.currentMana = self.maxMana
-        self.maxStamina = 30 + self.strength * 2
         self.currentStamina = self.maxStamina
     }
 }

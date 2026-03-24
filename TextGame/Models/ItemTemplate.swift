@@ -88,14 +88,19 @@ final class ItemTemplateLoader {
     /// 所有物品模板，以 id 為 key
     private(set) var templates: [String: ItemTemplate] = [:]
 
+    /// 載入錯誤訊息（nil 表示載入成功）
+    private(set) var loadError: String?
+
     private init() {
         loadTemplates()
     }
 
     /// 從 Bundle 載入 items.json
     private func loadTemplates() {
+        loadError = nil
         guard let url = Bundle.main.url(forResource: "items", withExtension: "json") else {
-            print("[ItemTemplateLoader] 找不到 items.json")
+            loadError = "找不到 items.json"
+            print("[ItemTemplateLoader] \(loadError!)")
             return
         }
 
@@ -106,7 +111,8 @@ final class ItemTemplateLoader {
             templates = Dictionary(uniqueKeysWithValues: container.items.map { ($0.id, $0) })
             print("[ItemTemplateLoader] 已載入 \(templates.count) 個物品模板")
         } catch {
-            print("[ItemTemplateLoader] 載入 items.json 失敗：\(error)")
+            loadError = "載入 items.json 失敗：\(error.localizedDescription)"
+            print("[ItemTemplateLoader] \(loadError!)")
         }
     }
 

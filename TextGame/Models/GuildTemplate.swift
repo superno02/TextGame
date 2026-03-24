@@ -74,14 +74,19 @@ final class GuildTemplateLoader {
     /// 所有職業模板，以 id 為 key
     private(set) var templates: [String: GuildTemplate] = [:]
 
+    /// 載入錯誤訊息（nil 表示載入成功）
+    private(set) var loadError: String?
+
     private init() {
         loadTemplates()
     }
 
     /// 從 Bundle 載入 guilds.json
     private func loadTemplates() {
+        loadError = nil
         guard let url = Bundle.main.url(forResource: "guilds", withExtension: "json") else {
-            print("[GuildTemplateLoader] 找不到 guilds.json")
+            loadError = "找不到 guilds.json"
+            print("[GuildTemplateLoader] \(loadError!)")
             return
         }
 
@@ -92,7 +97,8 @@ final class GuildTemplateLoader {
             templates = Dictionary(uniqueKeysWithValues: container.guilds.map { ($0.id, $0) })
             print("[GuildTemplateLoader] 已載入 \(templates.count) 個職業模板")
         } catch {
-            print("[GuildTemplateLoader] 載入 guilds.json 失敗：\(error)")
+            loadError = "載入 guilds.json 失敗：\(error.localizedDescription)"
+            print("[GuildTemplateLoader] \(loadError!)")
         }
     }
 
