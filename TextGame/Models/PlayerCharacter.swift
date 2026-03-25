@@ -15,6 +15,7 @@ final class PlayerCharacter {
     var name: String
     var guildRawValue: String  // 職業（儲存 rawValue）
     var circle: Int  // 等階（類似等級）
+    var experience: Int  // 目前累積的角色經驗值
 
     /// 職業（計算屬性，對應 Guild 列舉）
     @Transient
@@ -87,12 +88,67 @@ final class PlayerCharacter {
         skills.first { $0.type == type }
     }
 
+    // MARK: - 經驗值與升級
+
+    /// 升級所需的經驗值
+    @Transient
+    var experienceToNextCircle: Int {
+        circle * 50 + 50
+    }
+
+    /// 獲得經驗值，若達到門檻則升級
+    /// - Returns: 是否發生了升級
+    @discardableResult
+    func gainExperience(_ amount: Int) -> Bool {
+        experience += amount
+        var didLevelUp = false
+        while experience >= experienceToNextCircle {
+            performLevelUp()
+            didLevelUp = true
+        }
+        return didLevelUp
+    }
+
+    /// 執行升級邏輯
+    private func performLevelUp() {
+        experience -= experienceToNextCircle
+        circle += 1
+
+        // 取得職業成長值
+        let template = GuildTemplateLoader.shared.template(for: guild)
+        if let growth = template?.circleGrowth {
+            strength += growth.strength
+            agility += growth.agility
+            constitution += growth.constitution
+            intelligence += growth.intelligence
+            wisdom += growth.wisdom
+            charisma += growth.charisma
+        }
+
+        // 重新計算狀態值上限
+        if let template {
+            maxHealth = template.healthFormula.calculate(attributeValue: constitution)
+            maxMana = template.manaFormula.calculate(attributeValue: intelligence)
+            maxStamina = template.staminaFormula.calculate(attributeValue: strength)
+        } else {
+            maxHealth = 50 + constitution * 5
+            maxMana = 20 + intelligence * 3
+            maxStamina = 30 + strength * 2
+        }
+
+        // 升級全回復
+        currentHealth = maxHealth
+        currentMana = maxMana
+        currentStamina = maxStamina
+    }
+
     // MARK: - 初始化
 
     init(name: String, guild: Guild) {
         self.name = name
         self.guildRawValue = guild.rawValue
         self.circle = 1
+        self.experience = 0
         self.currentSceneId = "village"
 
         // 從職業模板取得基礎屬性，找不到時使用 fallback 預設值

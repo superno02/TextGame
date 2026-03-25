@@ -288,6 +288,8 @@ struct GameView: View {
     private func messageColor(for message: String) -> Color {
         if message.hasPrefix("[系統錯誤]") {
             return .red
+        } else if message.contains("等階提升") || message.hasPrefix("屬性成長：") || message.contains("已完全回復") {
+            return .yellow
         } else if message.contains("倒下了") {
             return .orange
         } else if message.contains("擊敗了") || message.contains("意識逐漸模糊") || message.contains("醒來") {
@@ -310,10 +312,6 @@ struct GameView: View {
             return .green
         } else if message.hasPrefix("——") {
             return .secondary
-        } else if message.contains("逃跑") || message.contains("脫離了戰鬥") {
-            return .teal
-        } else if message.contains("體力耗盡") || message.contains("太累了") {
-            return .orange
         }
         return .primary
     }

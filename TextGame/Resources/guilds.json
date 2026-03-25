@@ -15,6 +15,14 @@
             "primarySkills": [],
             "secondarySkills": [],
             "forbiddenSkills": [],
+            "circleGrowth": {
+                "strength": 1,
+                "agility": 1,
+                "constitution": 1,
+                "intelligence": 1,
+                "wisdom": 1,
+                "charisma": 1
+            },
             "healthFormula": {
                 "base": 50,
                 "perConstitution": 5
@@ -43,6 +51,14 @@
             "primarySkills": ["sword", "axe", "heavyArmor", "shield"],
             "secondarySkills": ["lightArmor", "evasion", "firstAid"],
             "forbiddenSkills": ["primaryMagic", "harness", "attunement"],
+            "circleGrowth": {
+                "strength": 2,
+                "agility": 1,
+                "constitution": 2,
+                "intelligence": 0,
+                "wisdom": 0,
+                "charisma": 1
+            },
             "healthFormula": {
                 "base": 60,
                 "perConstitution": 6
@@ -71,6 +87,14 @@
             "primarySkills": ["staff", "primaryMagic", "harness", "attunement"],
             "secondarySkills": ["scholarship", "appraisal", "perception"],
             "forbiddenSkills": ["heavyArmor", "shield"],
+            "circleGrowth": {
+                "strength": 0,
+                "agility": 1,
+                "constitution": 0,
+                "intelligence": 3,
+                "wisdom": 2,
+                "charisma": 0
+            },
             "healthFormula": {
                 "base": 40,
                 "perConstitution": 4
@@ -99,6 +123,14 @@
             "primarySkills": ["dagger", "stealth", "lockpick", "evasion"],
             "secondarySkills": ["bow", "lightArmor", "perception", "trading"],
             "forbiddenSkills": ["heavyArmor", "shield"],
+            "circleGrowth": {
+                "strength": 1,
+                "agility": 3,
+                "constitution": 1,
+                "intelligence": 1,
+                "wisdom": 0,
+                "charisma": 0
+            },
             "healthFormula": {
                 "base": 45,
                 "perConstitution": 5
@@ -127,6 +159,14 @@
             "primarySkills": ["staff", "primaryMagic", "firstAid", "attunement"],
             "secondarySkills": ["lightArmor", "shield", "scholarship", "teaching"],
             "forbiddenSkills": ["dagger", "stealth", "lockpick"],
+            "circleGrowth": {
+                "strength": 1,
+                "agility": 0,
+                "constitution": 1,
+                "intelligence": 1,
+                "wisdom": 2,
+                "charisma": 1
+            },
             "healthFormula": {
                 "base": 55,
                 "perConstitution": 5

@@ -1,6 +1,27 @@
 # TextGame 專案索引
 
-> 最後更新：2026-03-23
+> 最後更新：2026-03-25（經驗值系統、移除體力消耗）
+
+## 文檔導覽
+
+| 優先順序 | 文件 | 內容說明 | 建議閱讀時機 |
+|:--------:|------|----------|-------------|
+| 1 | [`ProjectOverview.md`](ProjectOverview.md) | 專案總覽、功能列表、技術棧、App 運作方式、主要模組概述 | 初次接觸專案時必讀 |
+| 2 | [`Architecture.md`](Architecture.md) | View + Engine + Model 三層架構、目錄結構、核心元件、技術債 | 開發新功能或理解架構時 |
+| 3 | [`CombatStats.md`](CombatStats.md) | 數值系統完整說明：角色屬性、狀態值公式、怪物數值、物品數值、技能經驗、戰鬥公式 | 數值調整或戰鬥相關開發時 |
+| 4 | [`Modules.md`](Modules.md) | 各模組職責詳述：App 進入點、Engine、Views（5個）、Models（持久化+模板）、Enums、Resources、Tests | 需了解特定模組細節時 |
+| 5 | [`ImportantFlows.md`](ImportantFlows.md) | 11 個核心流程圖：啟動、新遊戲、讀檔、Engine 初始化、場景移動、戰鬥、對話、存檔、子頁面導航、技能經驗、模板載入 | 追蹤 bug 或實作跨模組功能時 |
+| 6 | [`DependencyMap.md`](DependencyMap.md) | 模組間依賴關係圖：整體依賴、資料模型、模板載入器、View 資料存取路徑、物品/角色建立依賴鏈 | 重構或理解資料流向時 |
+| 7 | [`CodeStyle.md`](CodeStyle.md) | 程式碼風格與命名規範：命名規則、View/Engine/Model 結構範本、JSON 載入模式、測試風格、16 條 Coding Rule | 撰寫新程式碼或 code review 時 |
+| 8 | [`DebugGuide.md`](DebugGuide.md) | 常見問題與除錯指南：啟動失敗、JSON 載入、各功能問題檢查表、Schema 變更注意、日誌追蹤 | 遇到 bug 或問題排查時 |
+
+### 閱讀建議
+
+- **開發任務**（新功能、修 bug、重構）：至少閱讀本文件 + 優先順序 1~5
+- **數值調整或戰鬥相關**：額外閱讀 `CombatStats.md`
+- **簡單問答**（如「某個檔案在哪」）：僅需閱讀本文件即可
+
+---
 
 ## 專案概述
 
@@ -57,7 +78,7 @@
 | `Views/InventoryView.swift` | 背包頁面，顯示 7 個裝備部位與背包物品列表 |
 | `Views/StatusView.swift` | 屬性頁面，顯示角色基本資訊、六大屬性與三大狀態值 |
 | `Models/Enums.swift` | 列舉定義：職業(Guild)、技能分類(SkillCategory)、技能類型(SkillType)、裝備欄位(EquipmentSlot) |
-| `Models/PlayerCharacter.swift` | 玩家角色 Model，從 GuildTemplateLoader 取得初始屬性，含技能與背包關聯 |
+| `Models/PlayerCharacter.swift` | 玩家角色 Model，從 GuildTemplateLoader 取得初始屬性，含技能與背包關聯、經驗值與等階升級 |
 | `Models/Skill.swift` | 技能 Model，含技能類型、等級、經驗值與實戰經驗吸收機制 |
 | `Models/GameScene.swift` | 場景運行時結構，定義場景描述、出口列表 |
 | `Models/GameItem.swift` | 物品 Model，含類型、數值屬性、裝備功能與使用條件判斷 |
@@ -66,7 +87,7 @@
 | `Models/MonsterTemplate.swift` | 怪物模板與 MonsterTemplateLoader（Singleton） |
 | `Models/NPCTemplate.swift` | NPC 模板與 NPCTemplateLoader（Singleton），含條件對話過濾 |
 | `Models/ItemTemplate.swift` | 物品模板與 ItemTemplateLoader（Singleton） |
-| `Models/GuildTemplate.swift` | 職業模板與 GuildTemplateLoader（Singleton），含 StatusFormula |
+| `Models/GuildTemplate.swift` | 職業模板與 GuildTemplateLoader（Singleton），含 StatusFormula、CircleGrowth |
 
 ### JSON 資源檔
 
@@ -82,7 +103,7 @@
 
 | 檔案 | 測試內容 | 數量 |
 |------|----------|------|
-| `PlayerCharacterTests.swift` | 初始屬性、狀態值、職業對應 | 13 |
+| `PlayerCharacterTests.swift` | 初始屬性、狀態值、職業對應、經驗值與升級 | 20 |
 | `SkillTests.swift` | 經驗吸收、升級、分類、公式 | 9 |
 | `GameItemTests.swift` | 使用條件、堆疊、裝備 | 9 |
 | `TemplateLoaderTests.swift` | 5 個 Loader 載入驗證 | 12 |
@@ -118,7 +139,7 @@
 - [x] StatusView 完整實作（基本資訊、六大屬性、三大狀態值）
 - [x] 5 個 TemplateLoader 新增 loadError 追蹤，GameEngine 啟動時統一檢查
 - [x] NPC 談話功能（條件式對話過濾）
-- [x] 單元測試 50 個（Swift Testing 框架）
+- [x] 單元測試 57 個（Swift Testing 框架）
 - [x] 技術文件 7 份（docs/ 資料夾）
 - [x] 戰鬥系統實作（回合制自動戰鬥、命中/閃避/傷害公式、掉落物、死亡處理）
 - [x] 技能使用與經驗值獲取（戰鬥中自動觸發武器/防具/閃避技能經驗）
@@ -127,6 +148,12 @@
 - [x] CombatCalculator 純函數（命中/閃避/傷害/逃跑公式）
 - [x] GameView 戰鬥狀態 UI（戰鬥中禁用移動/攻擊、訊息顏色新增、攻擊彈窗顯示怪物資訊）
 - [x] 戰鬥系統單元測試 26 個（CombatTests.swift）
+- [x] 經驗值系統（擊殺怪物獲得 EXP、等階升級、職業屬性自動成長、狀態值重算與全回復）
+- [x] GuildTemplate 新增 CircleGrowth（每職業升級 +6 點，分佈依核心屬性）
+- [x] StatusView 新增經驗值進度條顯示
+- [x] GameView 升級訊息金色高亮
+- [x] 移除戰鬥體力消耗限制（移除每攻擊 -5 SP、體力不足自動逃跑）
+- [x] 經驗值系統單元測試 7 個（PlayerCharacterTests.swift）
 
 ### 待開發
 - [ ] 物品裝備/使用互動（背包內操作）

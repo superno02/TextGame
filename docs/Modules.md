@@ -1,6 +1,6 @@
 # Modules.md — 功能模組分析
 
-> 最後更新：2026-03-23（戰鬥系統實作後）
+> 最後更新：2026-03-25（經驗值系統、移除體力消耗）
 
 ---
 
@@ -48,7 +48,7 @@ TextGame
 | **功能說明** | 管理所有遊戲邏輯狀態，與 View 層分離 |
 | **主要 Class** | `GameEngine`（`@Observable`） |
 | **主要檔案** | `Engine/GameEngine.swift` |
-| **模組責任** | 訊息管理、場景移動、戰鬥系統、NPC 對話、存檔觸發、模板載入錯誤檢查 |
+| **模組責任** | 訊息管理、場景移動、戰鬥系統、經驗值授予與升級處理、NPC 對話、存檔觸發、模板載入錯誤檢查 |
 | **與其他模組的關係** | 持有 `ModelContext`；依賴 `SceneTemplateLoader`、`MonsterTemplateLoader`、`NPCTemplateLoader`、`ItemTemplateLoader`；操作 `SaveSlot`、`PlayerCharacter`；被 `GameView` 初始化與使用 |
 
 ### 主要屬性
@@ -64,8 +64,7 @@ TextGame
 - `runCombatLoop()` — 回合制戰鬥迴圈（async，每回合延遲 0.8 秒）
 - `executeCombatRound(character:monster:activeSkills:)` — 執行單一回合
 - `executeMonsterAttack(character:monster:activeSkills:)` — 怪物攻擊階段
-- `attemptFlee(character:monsterLevel:)` — 逃跑嘗試
-- `handleVictory(monster:character:)` — 勝利處理 + 掉落物
+- `handleVictory(monster:character:)` — 勝利處理（經驗值授予、升級判定、掉落物）
 - `handlePlayerDefeat(monster:character:)` — 死亡處理（傳送村莊）
 - `processLoot(monster:character:)` — 掉落物生成與背包處理
 - `grantArmorSkillExperience(...)` — 防具技能經驗發放
@@ -77,8 +76,8 @@ TextGame
 
 ### 戰鬥相關結構（定義於 `GameEngine.swift`）
 - `CombatMonster` — 戰鬥中怪物運行時狀態（包裝 `MonsterTemplate` + 可變 `currentHealth`）
-- `RoundResult` — 回合結果列舉（continues / monsterDefeated / playerDefeated / playerFled / fleeFailure）
-- `CombatCalculator` — 純函數戰鬥計算器（命中/閃避/傷害/逃跑公式）
+- `RoundResult` — 回合結果列舉（continues / monsterDefeated / playerDefeated）
+- `CombatCalculator` — 純函數戰鬥計算器（命中/閃避/傷害公式）
 
 ---
 
@@ -136,8 +135,8 @@ TextGame
 | **功能說明** | 顯示角色基本資訊、六大屬性與三大狀態值 |
 | **主要 Class** | `StatusView` |
 | **主要檔案** | `Views/StatusView.swift` |
-| **模組責任** | 接收 `PlayerCharacter`，顯示名稱/職業/等階、六大屬性、生命/魔力/體力 |
-| **與其他模組的關係** | 依賴 `PlayerCharacter`、`Guild.displayName` |
+| **模組責任** | 接收 `PlayerCharacter`，顯示名稱/職業/等階/經驗值進度條、六大屬性、生命/魔力/體力 |
+| **與其他模組的關係** | 依賴 `PlayerCharacter`（含 `experience`、`experienceToNextCircle`）、`Guild.displayName` |
 
 ---
 
@@ -149,9 +148,11 @@ TextGame
 |------|------|
 | **功能說明** | 玩家角色核心資料 |
 | **主要檔案** | `Models/PlayerCharacter.swift` |
-| **責任** | 儲存角色基本資訊（名稱、職業、等階）、六大屬性、三大狀態值、目前位置；提供戰鬥輔助計算屬性 |
+| **責任** | 儲存角色基本資訊（名稱、職業、等階）、六大屬性、三大狀態值、經驗值、目前位置；提供戰鬥輔助計算屬性與升級機制 |
 | **初始化** | 從 `GuildTemplateLoader` 取得 `baseStats` 設定屬性，使用 `StatusFormula` 計算狀態值，具備 fallback |
 | **關聯** | `@Relationship` → `[Skill]`（技能列表）、`[GameItem]`（背包物品） |
+| **經驗值屬性** | `experience: Int`（持久化）、`experienceToNextCircle: Int`（`@Transient`，公式：circle × 50 + 50） |
+| **經驗值方法** | `gainExperience(_ amount:) -> Bool` — 累加經驗值並觸發升級；`performLevelUp()` — 等階 +1、職業屬性成長、狀態值重算、全回復 |
 | **戰鬥輔助屬性** | `equippedWeapon`、`equippedArmor`、`totalAttackPower`、`totalDefensePower`、`weaponSkillType`（皆為 `@Transient` 計算屬性） |
 | **戰鬥輔助方法** | `skill(for: SkillType) -> Skill?` — 查找角色指定類型的技能 |
 
@@ -230,7 +231,8 @@ TextGame
 |------|------|
 | **功能說明** | 職業定義與載入 |
 | **主要檔案** | `Models/GuildTemplate.swift` |
-| **責任** | 從 `guilds.json` 載入職業資料；提供基礎屬性、技能分類、狀態值計算公式；供 `PlayerCharacter` 初始化使用 |
+| **責任** | 從 `guilds.json` 載入職業資料；提供基礎屬性、技能分類、狀態值計算公式、升級屬性成長（`CircleGrowth`）；供 `PlayerCharacter` 初始化與升級使用 |
+| **資料結構** | `GuildTemplate` → `GuildBaseStats`、`StatusFormula`、`CircleGrowth`（每次升級六大屬性成長值，合計 +6） |
 | **JSON 資料** | 5 種職業：無業遊民、戰士、法師、盜賊、牧師 |
 
 ---
@@ -265,10 +267,10 @@ TextGame
 
 | 檔案 | 測試項目 | 數量 |
 |------|----------|------|
-| `PlayerCharacterTests.swift` | 角色初始屬性、狀態值、職業對應 | 13 |
+| `PlayerCharacterTests.swift` | 角色初始屬性、狀態值、職業對應、經驗值與升級 | 20 |
 | `SkillTests.swift` | 經驗吸收、升級、技能分類、顯示名稱 | 9 |
 | `GameItemTests.swift` | 使用條件、堆疊判斷、裝備部位 | 9 |
 | `TemplateLoaderTests.swift` | 5 個 Loader 載入驗證、資料查詢 | 12 |
 | `NPCTemplateTests.swift` | 條件對話過濾、商人判定 | 6 |
-| `CombatTests.swift` | 戰鬥公式（命中/閃避/傷害/逃跑 clamping）、CombatMonster 狀態、角色戰鬥屬性、武器技能映射 | 26 |
-| **合計** | | **76（不含 UI 測試）** |
+| `CombatTests.swift` | 戰鬥公式（命中/閃避/傷害 clamping）、CombatMonster 狀態、角色戰鬥屬性、武器技能映射 | 26 |
+| **合計** | | **83（不含 UI 測試）** |

@@ -1,6 +1,6 @@
 # ImportantFlows.md — 重要流程文件
 
-> 最後更新：2026-03-23（戰鬥系統實作後）
+> 最後更新：2026-03-25（經驗值系統、移除體力消耗）
 
 ---
 
@@ -205,9 +205,6 @@ engine.showAttackSheet = true → 列出怪物（名稱 + 等級 + HP）
   ▼
 engine.attackMonster(monster)
   │
-  ├─ 體力檢查（currentStamina >= 5）
-  │   └─ 不足 → "你太累了，無法發動攻擊。" → 結束
-  │
   ├─ combatMonster = CombatMonster(template: monster)
   ├─ isInCombat = true
   ├─ appendMessage("你對{怪物名}發起了攻擊！")
@@ -217,27 +214,27 @@ Task { @MainActor } → runCombatLoop()
   │
   ├─ while isInCombat（每回合延遲 0.8 秒）
   │   │
-  │   ├─ 1. 體力不足 → 自動嘗試逃跑
-  │   │   ├─ 逃跑成功 → "你成功脫離了戰鬥！" → 結束戰鬥
-  │   │   └─ 逃跑失敗 → 承受怪物攻擊
-  │   │
-  │   ├─ 2. 消耗 5 SP → 玩家攻擊
+  │   ├─ 1. 玩家攻擊
   │   │   ├─ 命中率判定（CombatCalculator.calculateHitChance）
   │   │   ├─ 命中 → 傷害計算 → 武器技能經驗 1.0 + level × 0.5
   │   │   └─ 未命中 → 武器技能經驗 0.5
   │   │
-  │   ├─ 3. 怪物死亡判定
-  │   │   └─ isDead → handleVictory() → processLoot() → 結束戰鬥
+  │   ├─ 2. 怪物死亡判定
+  │   │   └─ isDead → handleVictory()
+  │   │       ├─ 授予角色經驗值（monster.template.experience）
+  │   │       ├─ character.gainExperience() → 升級判定
+  │   │       ├─ 升級 → 屬性成長 + 狀態值重算 + 全回復
+  │   │       └─ processLoot() → 結束戰鬥
   │   │
-  │   ├─ 4. 怪物攻擊
+  │   ├─ 3. 怪物攻擊
   │   │   ├─ 閃避率判定（CombatCalculator.calculateDodgeChance）
   │   │   ├─ 閃避成功 → 閃避技能經驗 1.5 + level × 0.5
   │   │   └─ 被擊中 → 傷害計算 → 防具技能經驗（每件 0.5 + level × 0.3）
   │   │
-  │   ├─ 5. 玩家死亡判定
+  │   ├─ 4. 玩家死亡判定
   │   │   └─ HP <= 0 → handlePlayerDefeat() → 傳送村莊、恢復半血 → 結束戰鬥
   │   │
-  │   └─ 6. absorbCombatSkills() → 吸收回合中觸發的技能經驗
+  │   └─ 5. absorbCombatSkills() → 吸收回合中觸發的技能經驗
   │
   └─ 戰鬥結束：isInCombat = false, combatMonster = nil
 ```
@@ -360,7 +357,7 @@ NavigationLink（技能 / 物品 / 屬性）
   │   └─ 背包：未裝備物品列表
   │
   └─ StatusView(character: character)
-      ├─ 基本資訊（名稱、職業、等階）
+      ├─ 基本資訊（名稱、職業、等階、經驗值進度條）
       ├─ 六大屬性
       └─ 三大狀態值
 ```
@@ -407,7 +404,79 @@ Skill.absorbExperience()
 
 ---
 
-## 11. Template Loading Flow（模板載入流程）
+## 11. Character Level Up Flow（角色升級流程）
+
+### 相關 Class
+`GameEngine` → `PlayerCharacter` → `GuildTemplateLoader` → `CircleGrowth` → `StatusFormula`
+
+### 流程說明
+
+```
+handleVictory() 中授予經驗值
+  │
+  ▼
+character.gainExperience(monster.template.experience)
+  │
+  ├─ experience += amount
+  │
+  ├─ while experience >= experienceToNextCircle（= circle × 50 + 50）
+  │   │
+  │   ▼
+  │   performLevelUp()
+  │     │
+  │     ├─ experience -= experienceToNextCircle（扣除已用經驗值）
+  │     ├─ circle += 1
+  │     │
+  │     ├─ GuildTemplateLoader.shared.template(for: guild)
+  │     │   └─ circleGrowth → CircleGrowth
+  │     │       ├─ strength += growth.strength
+  │     │       ├─ agility += growth.agility
+  │     │       ├─ constitution += growth.constitution
+  │     │       ├─ intelligence += growth.intelligence
+  │     │       ├─ wisdom += growth.wisdom
+  │     │       └─ charisma += growth.charisma
+  │     │
+  │     ├─ 重算狀態值（StatusFormula.calculate）
+  │     │   ├─ maxHealth = healthFormula.calculate(constitution)
+  │     │   ├─ maxMana = manaFormula.calculate(intelligence)
+  │     │   └─ maxStamina = staminaFormula.calculate(strength)
+  │     │
+  │     └─ 全回復（currentHealth/Mana/Stamina = max）
+  │
+  ├─ 回傳是否升級（Bool）
+  │
+  ▼
+GameEngine（升級訊息輸出）
+  ├─ appendMessage("你獲得了 {N} 點經驗值。")
+  ├─ 若升級：
+  │   ├─ appendMessage("你的等階提升到了 {circle}！")
+  │   ├─ appendMessage("屬性成長：力量+N、敏捷+N、...")
+  │   └─ appendMessage("HP/MP/SP 已完全回復！")
+  └─ processLoot()
+```
+
+### 升級門檻公式
+
+| Circle | 所需經驗值 |
+|:------:|:----------:|
+| 1 → 2 | 100 |
+| 2 → 3 | 150 |
+| 3 → 4 | 200 |
+| N → N+1 | N × 50 + 50 |
+
+### 各職業每次升級屬性成長（合計皆 +6）
+
+| 職業 | STR | AGI | CON | INT | WIS | CHA |
+|------|:---:|:---:|:---:|:---:|:---:|:---:|
+| 無業遊民 | +1 | +1 | +1 | +1 | +1 | +1 |
+| 戰士 | +2 | +1 | +2 | +0 | +0 | +1 |
+| 法師 | +0 | +1 | +0 | +3 | +2 | +0 |
+| 盜賊 | +1 | +3 | +1 | +1 | +0 | +0 |
+| 牧師 | +1 | +0 | +1 | +1 | +2 | +1 |
+
+---
+
+## 12. Template Loading Flow（模板載入流程）
 
 ### 相關 Class
 所有 `*TemplateLoader`

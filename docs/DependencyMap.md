@@ -1,6 +1,6 @@
 # DependencyMap.md — 依賴關係圖
 
-> 最後更新：2026-03-23（戰鬥系統實作後）
+> 最後更新：2026-03-25（經驗值系統、移除體力消耗）
 
 ---
 
@@ -36,7 +36,8 @@ GameEngine（@Observable）
   │   └── PlayerCharacter
   │       ├── equippedWeapon / equippedArmor（@Transient）
   │       ├── totalAttackPower / totalDefensePower（@Transient）
-  │       └── skill(for: SkillType) → Skill
+  │       ├── skill(for: SkillType) → Skill
+  │       └── gainExperience() → performLevelUp() → GuildTemplateLoader（CircleGrowth + StatusFormula）
   ├── SceneTemplateLoader.shared
   ├── MonsterTemplateLoader.shared
   ├── NPCTemplateLoader.shared
@@ -62,7 +63,8 @@ StatusView
 ```
 PlayerCharacter（@Model）
   ├── Guild（列舉，透過 guildRawValue）
-  ├── GuildTemplateLoader（init 時取得 baseStats + StatusFormula）
+  ├── GuildTemplateLoader（init 時取得 baseStats + StatusFormula；升級時取得 CircleGrowth）
+  ├── experience: Int（經驗值）→ gainExperience() → performLevelUp()
   ├── Skill[]（@Relationship, cascade delete）
   │   └── SkillType（列舉）
   │       └── SkillCategory（計算屬性）
@@ -105,7 +107,7 @@ ItemTemplateLoader.shared
 
 GuildTemplateLoader.shared
   ├── guilds.json（Bundle 資源）
-  ├── GuildTemplate → GuildBaseStats / StatusFormula
+  ├── GuildTemplate → GuildBaseStats / StatusFormula / CircleGrowth
   └── loadError: String?
 ```
 
@@ -137,6 +139,8 @@ GameEngine
   → NPCTemplate.availableDialogues(playerGuild:)（過濾對話）
   → CombatMonster(template:)（建立戰鬥怪物實例）
   → CombatCalculator.*（戰鬥公式計算）
+  → PlayerCharacter.gainExperience()（經驗值授予、升級判定）
+  → GuildTemplateLoader.shared.template(for:).circleGrowth（升級屬性成長）
   → ItemTemplateLoader.shared.template(for:)（掉落物查詢）
   → PlayerCharacter.skill(for:)（技能查詢）
   → Skill.gainFieldExperience() / absorbExperience()（技能經驗）
@@ -157,6 +161,7 @@ InventoryView(character:)
 
 StatusView(character:)
   → character.guild.displayName / circle / strength / ...
+  → character.experience / experienceToNextCircle（經驗值進度條）
   → character.currentHealth / maxHealth / ...
 ```
 
@@ -227,9 +232,11 @@ GameView → GameEngine → SceneTemplateLoader → GameScene
 ```
 GameView → GameEngine → MonsterTemplateLoader → MonsterTemplate
                       → CombatMonster（運行時狀態）
-                      → CombatCalculator（命中/閃避/傷害/逃跑公式）
+                      → CombatCalculator（命中/閃避/傷害公式）
                       → PlayerCharacter.totalAttackPower / totalDefensePower
                       → PlayerCharacter.skill(for:) → Skill.gainFieldExperience()
+                      → PlayerCharacter.gainExperience() → performLevelUp()
+                      → GuildTemplateLoader（CircleGrowth + StatusFormula）
                       → ItemTemplateLoader（掉落物生成）
                       → GameItem(from: ItemTemplate)（加入背包）
 ```
@@ -256,4 +263,10 @@ GameView → engine.currentSaveSlot?.character
 ### 角色建立鏈
 ```
 StartView → PlayerCharacter(name:, guild:) → GuildTemplateLoader → GuildTemplate.baseStats + StatusFormula
+```
+
+### 角色升級鏈
+```
+handleVictory() → character.gainExperience(exp)
+  → performLevelUp() → GuildTemplateLoader → CircleGrowth（屬性成長）+ StatusFormula（狀態值重算）
 ```

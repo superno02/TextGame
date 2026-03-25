@@ -33,6 +33,19 @@ struct StatusView: View {
                     Text("\(character.circle)")
                         .foregroundColor(.secondary)
                 }
+                VStack(spacing: 4) {
+                    HStack {
+                        Text("經驗值")
+                        Spacer()
+                        Text("\(character.experience) / \(character.experienceToNextCircle)")
+                            .foregroundColor(.secondary)
+                    }
+                    ProgressView(
+                        value: Double(character.experience),
+                        total: Double(character.experienceToNextCircle)
+                    )
+                    .tint(.yellow)
+                }
             }
 
             Section("屬性") {

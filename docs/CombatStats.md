@@ -1,6 +1,8 @@
 # 戰鬥數值系統說明
 
-本文件詳細說明 TextGame 中角色與怪物的戰鬥相關數值設計，包含屬性計算公式、物品數值結構、怪物數值分佈，以及技能經驗系統。
+本文件詳細說明 TextGame 中角色與怪物的戰鬥相關數值設計，包含屬性計算公式、物品數值結構、怪物數值分佈、技能經驗系統，以及角色經驗值與等階升級。
+
+> 最後更新：2026-03-25（經驗值系統、移除體力消耗）
 
 ---
 
@@ -287,17 +289,15 @@ func canBeUsedBy(_ character: PlayerCharacter) -> Bool
 
 ```
 玩家選擇怪物目標 → attackMonster()
-  → 體力檢查（≥ 5 SP）
   → 建立 CombatMonster（運行時狀態）
   → isInCombat = true
   → Task { @MainActor } → runCombatLoop()
     → 每回合（延遲 0.8 秒產生文字效果）：
-      1. 體力不足 → 自動嘗試逃跑
-      2. 消耗 5 SP → 玩家攻擊（命中判定 → 傷害計算）
-      3. 怪物死亡判定 → 勝利處理（訊息 + 掉落物）
-      4. 怪物攻擊（閃避判定 → 傷害計算）
-      5. 玩家死亡判定 → 死亡處理（傳送村莊 + 恢復半血）
-      6. 吸收回合中觸發的技能經驗
+      1. 玩家攻擊（命中判定 → 傷害計算）
+      2. 怪物死亡判定 → 勝利處理（經驗值 + 升級判定 + 掉落物）
+      3. 怪物攻擊（閃避判定 → 傷害計算）
+      4. 玩家死亡判定 → 死亡處理（傳送村莊 + 恢復半血）
+      5. 吸收回合中觸發的技能經驗
 ```
 
 ### 核心資料結構
@@ -305,7 +305,7 @@ func canBeUsedBy(_ character: PlayerCharacter) -> Bool
 | 結構 | 定義位置 | 說明 |
 |------|----------|------|
 | `CombatMonster` | `GameEngine.swift` | 戰鬥中怪物的運行時狀態，包裝 `MonsterTemplate` 並追蹤可變 `currentHealth` |
-| `RoundResult` | `GameEngine.swift` | 回合結果列舉：`continues` / `monsterDefeated` / `playerDefeated` / `playerFled` / `fleeFailure` |
+| `RoundResult` | `GameEngine.swift` | 回合結果列舉：`continues` / `monsterDefeated` / `playerDefeated` |
 | `CombatCalculator` | `GameEngine.swift` | 戰鬥數值計算純函數集（`enum`，無實例化），方便單元測試 |
 
 ### 角色戰鬥參數
@@ -316,7 +316,6 @@ func canBeUsedBy(_ character: PlayerCharacter) -> Bool
 | 總防禦力 `totalDefensePower` | Σ(已裝備防具的 `defensePower`) | 傷害減免 |
 | 武器技能 `weaponSkillType` | `SkillType.weaponSkillType(for: itemId)` | 裝備武器對應的技能類型 |
 | 閃避技能等級 | `skill(for: .evasion)?.rank` | 閃避機率計算因子 |
-| 體力 `currentStamina` | 每次攻擊消耗 5 SP | 體力不足時自動嘗試逃跑 |
 
 ### 戰鬥公式
 
@@ -340,19 +339,6 @@ func canBeUsedBy(_ character: PlayerCharacter) -> Bool
 基礎傷害 = max(攻擊力 - 防禦力, 1)
 實際傷害 = max(基礎傷害 × random(0.8 ~ 1.2), 1)
 ```
-
-#### 逃跑成功率（`calculateFleeChance`）
-
-```
-逃跑率 = 0.4 + 敏捷 × 0.01 - 怪物等級 × 0.05
-上限 0.80 / 下限 0.15
-```
-
-### 體力消耗
-
-- 每次攻擊消耗 **5 SP**
-- 體力不足時自動嘗試逃跑
-- 逃跑失敗仍會承受怪物的攻擊
 
 ### 戰鬥觸發的技能經驗
 
@@ -384,6 +370,14 @@ func canBeUsedBy(_ character: PlayerCharacter) -> Bool
 | 防禦力 ≥ 5 | 重甲 |
 | 防禦力 < 5 | 輕甲 |
 
+### 勝利處理（經驗值授予）
+
+怪物死亡後依序處理：
+1. 授予角色經驗值（`monster.template.experience`）
+2. 呼叫 `character.gainExperience(exp)`，若達到升級門檻則自動升級
+3. 升級時：屬性依職業 `CircleGrowth` 成長、狀態值重算、HP/MP/SP 全回復
+4. 輸出升級訊息與屬性成長明細
+
 ### 掉落物處理
 
 怪物死亡後遍歷 `MonsterTemplate.loot`：
@@ -403,7 +397,7 @@ func canBeUsedBy(_ character: PlayerCharacter) -> Bool
 
 - 「移動」按鈕 → 禁用（顯示「戰鬥中無法移動！」）
 - 「攻擊」按鈕 → 禁用（顯示「你正在戰鬥中！」）
-- 訊息顏色：傷害→紅色、閃避→薄荷色、勝利→紫色、掉落→黃色、逃跑→青色、體力耗盡→橙色
+- 訊息顏色：傷害→紅色、閃避→薄荷色、勝利→紫色、掉落→黃色、升級→金色
 
 ---
 
@@ -427,3 +421,87 @@ func canBeUsedBy(_ character: PlayerCharacter) -> Bool
 - **新手區**（兔子/雞）：任何職業裸裝即可輕鬆擊殺
 - **進階區**（野豬/灰狼）：需要裝備與一定技能等級，戰士有 HP 優勢但戰鬥仍需注意
 - **職業限定裝備**（戰士巨劍/法師長袍）：提供顯著戰力跳躍，作為等階 3 的目標獎勵
+
+---
+
+## 九、角色經驗值與等階升級系統
+
+角色透過擊殺怪物獲得經驗值（EXP），累積足夠經驗後等階（circle）提升。
+
+### 經驗值來源
+
+| 怪物 | 等級 | 擊殺經驗 |
+|------|:----:|:--------:|
+| 雞 | 1 | 3 |
+| 兔子 | 1 | 5 |
+| 野豬 | 3 | 15 |
+| 灰狼 | 4 | 20 |
+
+### 等階升級公式
+
+```
+升級所需經驗 = circle × 50 + 50
+```
+
+| 等階 | 升級所需 | 累計經驗 |
+|:----:|:--------:|:--------:|
+| 1 → 2 | 100 | 100 |
+| 2 → 3 | 150 | 250 |
+| 3 → 4 | 200 | 450 |
+| 4 → 5 | 250 | 700 |
+| 5 → 6 | 300 | 1,000 |
+
+### 升級時屬性自動成長
+
+每次升級依職業模板 `CircleGrowth` 增加屬性（每職業每次 +6 點）：
+
+| 職業 | STR | AGI | CON | INT | WIS | CHA |
+|------|:---:|:---:|:---:|:---:|:---:|:---:|
+| 無業遊民 | +1 | +1 | +1 | +1 | +1 | +1 |
+| 戰士 | +2 | +1 | +2 | +0 | +0 | +1 |
+| 法師 | +0 | +1 | +0 | +3 | +2 | +0 |
+| 盜賊 | +1 | +3 | +1 | +1 | +0 | +0 |
+| 牧師 | +1 | +0 | +1 | +1 | +2 | +1 |
+
+### 升級後狀態值處理
+
+1. 六大屬性依 `CircleGrowth` 增加
+2. `maxHealth`/`maxMana`/`maxStamina` 使用職業 `StatusFormula` 重新計算
+3. HP/MP/SP 全回復至新上限
+
+### 升級效率參考
+
+以**無業遊民**打**兔子**（5 EXP/隻）為例：
+
+| 升級 | 所需經驗 | 需擊殺兔子數 |
+|:----:|:--------:|:-----------:|
+| 1 → 2 | 100 | 20 隻 |
+| 2 → 3 | 150 | 30 隻 |
+| 3 → 4 | 200 | 40 隻 |
+
+以**戰士**打**灰狼**（20 EXP/隻）為例：
+
+| 升級 | 所需經驗 | 需擊殺灰狼數 |
+|:----:|:--------:|:-----------:|
+| 1 → 2 | 100 | 5 隻 |
+| 2 → 3 | 150 | 8 隻 |
+| 3 → 4 | 200 | 10 隻 |
+
+---
+
+## 十、職業更換設計規則（預留）
+
+未來實作職業更換功能時，需遵循以下規則：
+
+### 核心原則：屬性保留、公式切換
+
+1. **六大屬性不變** — 已透過 `CircleGrowth` 投入的點數不會因換職業而退回或重新分配，屬性值維持當前數值
+2. **HP/MP/SP 上限重算** — 換職業後使用新職業的 `StatusFormula` 重新計算 `maxHealth`/`maxMana`/`maxStamina`（各職業的 `base` 與倍率不同）
+3. **當前狀態值 clamp** — 重算後若新上限低於當前值，需將 `currentHealth`/`currentMana`/`currentStamina` clamp 至新上限
+4. **後續升級使用新職業成長** — 換職後的每次升級按新職業的 `CircleGrowth` 分佈加點
+
+### 與現有架構的相容性
+
+- `PlayerCharacter` 的六大屬性為 SwiftData 持久化欄位（直接存數值，非公式推算），天然支持此規則
+- `SaveSlot` 透過 `@Relationship` 關聯 `PlayerCharacter`，存檔時角色所有屬性值一併保存
+- 換職業只需修改 `guildRawValue` 並重算三大狀態值上限即可

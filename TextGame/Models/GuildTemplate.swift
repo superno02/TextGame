@@ -37,6 +37,18 @@ struct StatusFormula: Codable, Equatable {
     }
 }
 
+// MARK: - 等階成長屬性
+
+/// 每次等階提升時各屬性的成長值
+struct CircleGrowth: Codable, Equatable {
+    let strength: Int       // 力量成長
+    let agility: Int        // 敏捷成長
+    let constitution: Int   // 體質成長
+    let intelligence: Int   // 智力成長
+    let wisdom: Int         // 智慧成長
+    let charisma: Int       // 魅力成長
+}
+
 // MARK: - 職業模板
 
 /// 從 JSON 載入的職業模板定義
@@ -48,6 +60,7 @@ struct GuildTemplate: Codable, Identifiable {
     let primarySkills: [String]     // 主要技能（升級較快）
     let secondarySkills: [String]   // 次要技能
     let forbiddenSkills: [String]   // 禁止技能（無法學習）
+    let circleGrowth: CircleGrowth      // 等階提升時的屬性成長
     let healthFormula: StatusFormula    // 生命值計算公式
     let manaFormula: StatusFormula      // 魔力值計算公式
     let staminaFormula: StatusFormula   // 體力值計算公式

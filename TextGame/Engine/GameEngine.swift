@@ -33,8 +33,6 @@ enum RoundResult {
     case continues
     case monsterDefeated
     case playerDefeated
-    case playerFled
-    case fleeFailure
 }
 
 /// 戰鬥數值計算器（純函數，方便測試）
@@ -177,9 +175,6 @@ final class GameEngine {
 
     // MARK: - 戰鬥系統
 
-    /// 每次攻擊消耗的體力
-    private let staminaCostPerAttack = 5
-
     /// 發動攻擊，進入戰鬥
     func attackMonster(_ monster: MonsterTemplate) {
         guard !isInCombat else {
@@ -188,11 +183,6 @@ final class GameEngine {
         }
 
         guard let character = currentSaveSlot?.character else { return }
-
-        guard character.currentStamina >= staminaCostPerAttack else {
-            appendMessage("你太累了，無法發動攻擊。先休息一下吧。")
-            return
-        }
 
         combatMonster = CombatMonster(template: monster)
         isInCombat = true
@@ -233,11 +223,7 @@ final class GameEngine {
                 handleVictory(monster: monster, character: character)
             case .playerDefeated:
                 handlePlayerDefeat(monster: monster, character: character)
-            case .playerFled:
-                appendMessage("你成功脫離了戰鬥！")
-                isInCombat = false
-                combatMonster = nil
-            case .continues, .fleeFailure:
+            case .continues:
                 absorbCombatSkills(character: character, skillTypes: activeSkills)
                 continue
             }
@@ -251,26 +237,7 @@ final class GameEngine {
         monster: inout CombatMonster,
         activeSkills: inout Set<SkillType>
     ) -> RoundResult {
-        // 1. 體力不足 → 自動嘗試逃跑
-        if character.currentStamina < staminaCostPerAttack {
-            appendMessage("你體力耗盡，試圖逃跑...")
-            if attemptFlee(character: character, monsterLevel: monster.level) {
-                return .playerFled
-            }
-            appendMessage("\(monster.name)擋住了去路！")
-            // 逃跑失敗仍要承受怪物攻擊
-            let monsterResult = executeMonsterAttack(
-                character: character,
-                monster: monster,
-                activeSkills: &activeSkills
-            )
-            if character.currentHealth <= 0 { return .playerDefeated }
-            return monsterResult == .dodged ? .fleeFailure : .fleeFailure
-        }
-
-        // 2. 玩家攻擊
-        character.currentStamina -= staminaCostPerAttack
-
+        // 1. 玩家攻擊
         let weaponSkill = character.weaponSkillType
         let weaponSkillRank = weaponSkill.flatMap { character.skill(for: $0)?.rank } ?? 0
 
@@ -370,19 +337,38 @@ final class GameEngine {
         }
     }
 
-    /// 嘗試逃跑
-    private func attemptFlee(character: PlayerCharacter, monsterLevel: Int) -> Bool {
-        let fleeChance = CombatCalculator.calculateFleeChance(
-            agility: character.agility,
-            monsterLevel: monsterLevel
-        )
-        return Double.random(in: 0.0..<1.0) < fleeChance
-    }
-
     /// 勝利處理
     private func handleVictory(monster: CombatMonster, character: PlayerCharacter) {
         appendMessage("——————————")
         appendMessage("\(monster.name)倒下了！")
+
+        // 授予角色經驗值
+        let exp = monster.template.experience
+        let previousCircle = character.circle
+        let didLevelUp = character.gainExperience(exp)
+        appendMessage("你獲得了 \(exp) 點經驗值。")
+
+        if didLevelUp {
+            appendMessage("——————————")
+            appendMessage("你的等階提升到了 \(character.circle)！")
+
+            // 顯示屬性成長
+            let template = GuildTemplateLoader.shared.template(for: character.guild)
+            if let growth = template?.circleGrowth {
+                let circlesGained = character.circle - previousCircle
+                var growthParts: [String] = []
+                if growth.strength > 0 { growthParts.append("力量+\(growth.strength * circlesGained)") }
+                if growth.agility > 0 { growthParts.append("敏捷+\(growth.agility * circlesGained)") }
+                if growth.constitution > 0 { growthParts.append("體質+\(growth.constitution * circlesGained)") }
+                if growth.intelligence > 0 { growthParts.append("智力+\(growth.intelligence * circlesGained)") }
+                if growth.wisdom > 0 { growthParts.append("智慧+\(growth.wisdom * circlesGained)") }
+                if growth.charisma > 0 { growthParts.append("魅力+\(growth.charisma * circlesGained)") }
+                if !growthParts.isEmpty {
+                    appendMessage("屬性成長：\(growthParts.joined(separator: "、"))")
+                }
+            }
+            appendMessage("HP/MP/SP 已完全回復！")
+        }
 
         // 處理掉落物
         processLoot(monster: monster.template, character: character)
