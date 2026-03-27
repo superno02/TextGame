@@ -1,6 +1,6 @@
 # TextGame 專案索引
 
-> 最後更新：2026-03-27（世界內容擴充：河谷→沼澤→廢墟區域）
+> 最後更新：2026-03-27（文件分拆：CombatStats→Combat/Equipment/Monsters）
 
 ## 文檔導覽
 
@@ -8,17 +8,20 @@
 |:--------:|------|----------|-------------|
 | 1 | [`ProjectOverview.md`](ProjectOverview.md) | 專案總覽、功能列表、技術棧、App 運作方式、主要模組概述 | 初次接觸專案時必讀 |
 | 2 | [`Architecture.md`](Architecture.md) | View + Engine + Model 三層架構、目錄結構、核心元件、技術債 | 開發新功能或理解架構時 |
-| 3 | [`CombatStats.md`](CombatStats.md) | 數值系統完整說明：角色屬性、狀態值公式、怪物數值、物品數值、技能經驗、戰鬥公式 | 數值調整或戰鬥相關開發時 |
-| 4 | [`Modules.md`](Modules.md) | 各模組職責詳述：App 進入點、Engine、Views（5個）、Models（持久化+模板）、Enums、Resources、Tests | 需了解特定模組細節時 |
-| 5 | [`ImportantFlows.md`](ImportantFlows.md) | 11 個核心流程圖：啟動、新遊戲、讀檔、Engine 初始化、場景移動、戰鬥、對話、存檔、子頁面導航、技能經驗、模板載入 | 追蹤 bug 或實作跨模組功能時 |
-| 6 | [`DependencyMap.md`](DependencyMap.md) | 模組間依賴關係圖：整體依賴、資料模型、模板載入器、View 資料存取路徑、物品/角色建立依賴鏈 | 重構或理解資料流向時 |
-| 7 | [`CodeStyle.md`](CodeStyle.md) | 程式碼風格與命名規範：命名規則、View/Engine/Model 結構範本、JSON 載入模式、測試風格、16 條 Coding Rule | 撰寫新程式碼或 code review 時 |
-| 8 | [`DebugGuide.md`](DebugGuide.md) | 常見問題與除錯指南：啟動失敗、JSON 載入、各功能問題檢查表、Schema 變更注意、日誌追蹤 | 遇到 bug 或問題排查時 |
+| 3 | [`CombatStats.md`](CombatStats.md) | 角色屬性、狀態值公式、技能經驗系統、等階升級、職業更換規則 | 角色數值調整或升級相關開發時 |
+| 4 | [`Combat.md`](Combat.md) | 戰鬥系統流程、公式（命中/閃避/傷害）、技能經驗觸發、數值平衡參考 | 戰鬥相關開發時 |
+| 5 | [`Equipment.md`](Equipment.md) | 物品數值（武器/防具/消耗品/素材）、裝備欄位系統、交易數值系統 | 裝備或交易相關開發時 |
+| 6 | [`Monsters.md`](Monsters.md) | 怪物數值一覽、掉落物系統、場景難度分佈 | 新增怪物或調整掉落時 |
+| 7 | [`Modules.md`](Modules.md) | 各模組職責詳述：App 進入點、Engine、Views（5個）、Models（持久化+模板）、Enums、Resources、Tests | 需了解特定模組細節時 |
+| 8 | [`ImportantFlows.md`](ImportantFlows.md) | 13 個核心流程圖：啟動、新遊戲、讀檔、Engine 初始化、場景移動、戰鬥、對話、存檔、子頁面導航、技能經驗、模板載入 | 追蹤 bug 或實作跨模組功能時 |
+| 9 | [`DependencyMap.md`](DependencyMap.md) | 模組間依賴關係圖：整體依賴、資料模型、模板載入器、View 資料存取路徑、物品/角色建立依賴鏈 | 重構或理解資料流向時 |
+| 10 | [`CodeStyle.md`](CodeStyle.md) | 程式碼風格與命名規範：命名規則、View/Engine/Model 結構範本、JSON 載入模式、測試風格、16 條 Coding Rule | 撰寫新程式碼或 code review 時 |
+| 11 | [`DebugGuide.md`](DebugGuide.md) | 常見問題與除錯指南：啟動失敗、JSON 載入、各功能問題檢查表、Schema 變更注意、日誌追蹤 | 遇到 bug 或問題排查時 |
 
 ### 閱讀建議
 
-- **開發任務**（新功能、修 bug、重構）：至少閱讀本文件 + 優先順序 1~5
-- **數值調整或戰鬥相關**：額外閱讀 `CombatStats.md`
+- **開發任務**（新功能、修 bug、重構）：至少閱讀本文件 + 優先順序 1~2 + 7~8
+- **數值調整**：依主題選讀 `CombatStats.md`（角色）、`Combat.md`（戰鬥）、`Equipment.md`（裝備）、`Monsters.md`（怪物）
 - **簡單問答**（如「某個檔案在哪」）：僅需閱讀本文件即可
 
 ---
@@ -155,7 +158,7 @@
 - [x] 6 個 TemplateLoader 新增 loadError 追蹤，GameEngine 啟動時統一檢查
 - [x] NPC 談話功能（條件式對話過濾）
 - [x] 單元測試 97 個（Swift Testing 框架）
-- [x] 技術文件 7 份（docs/ 資料夾）
+- [x] 技術文件 10 份（docs/ 資料夾）
 - [x] 戰鬥系統實作（回合制自動戰鬥、命中/閃避/傷害公式、掉落物、死亡處理）
 - [x] 技能使用與經驗值獲取（戰鬥中自動觸發武器/防具/閃避技能經驗）
 - [x] PlayerCharacter 戰鬥輔助屬性（totalAttackPower、totalDefensePower、equippedWeapon 等）
