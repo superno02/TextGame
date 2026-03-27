@@ -1,6 +1,6 @@
 # Modules.md — 功能模組分析
 
-> 最後更新：2026-03-27（JSON ID 流水號前綴化）
+> 最後更新：2026-03-27（新增物品交易系統）
 
 ---
 
@@ -16,6 +16,7 @@ TextGame
 │   ├── GameView（純 UI 層）
 │   ├── SkillView
 │   ├── InventoryView
+│   ├── ShopView
 │   └── StatusView
 ├── Models 模組
 │   ├── 持久化 Model（SwiftData）
@@ -48,7 +49,7 @@ TextGame
 | **功能說明** | 管理所有遊戲邏輯狀態，與 View 層分離 |
 | **主要 Class** | `GameEngine`（`@Observable`） |
 | **主要檔案** | `Engine/GameEngine.swift` |
-| **模組責任** | 訊息管理、場景移動、戰鬥系統、經驗值授予與升級處理、NPC 對話、存檔觸發、模板載入錯誤檢查 |
+| **模組責任** | 訊息管理、場景移動、戰鬥系統、經驗值授予與升級處理、NPC 對話、商店交易、存檔觸發、模板載入錯誤檢查 |
 | **與其他模組的關係** | 持有 `ModelContext`；依賴 `SceneTemplateLoader`、`MonsterTemplateLoader`、`NPCTemplateLoader`、`ItemTemplateLoader`、`LootTableLoader`；操作 `SaveSlot`、`PlayerCharacter`；被 `GameView` 初始化與使用 |
 
 ### 主要屬性
@@ -57,6 +58,9 @@ TextGame
 - `showMoveSheet / showAttackSheet / showTalkSheet: Bool` — 彈窗控制
 - `isInCombat: Bool` — 戰鬥狀態標記
 - `combatMonster: CombatMonster?` — 當前戰鬥中的怪物實例
+- `showShopSheet: Bool` — 商店介面顯示控制
+- `currentShopNPC: NPCTemplate?` — 當前商店 NPC
+- `npcStocks: [String: [String: Int]]` — NPC 庫存運行時追蹤（場景切換時重置）
 
 ### 主要方法
 - `moveToScene(_ sceneId:)` — 場景移動
@@ -69,7 +73,11 @@ TextGame
 - `processLoot(monster:character:)` — 掉落物處理（查詢 LootTableLoader，支援數量範圍）
 - `grantArmorSkillExperience(...)` — 防具技能經驗發放
 - `absorbCombatSkills(...)` — 回合結束吸收技能經驗
-- `talkToNPC(_ npc:)` — NPC 對話（含條件過濾）
+- `talkToNPC(_ npc:)` — NPC 對話（含條件過濾），商人 NPC 談話後設定 currentShopNPC
+- `buyItem(from:shopItem:)` — 購買物品（扣金幣、扣庫存、加背包）
+- `sellItem(to:item:)` — 出售物品（加金幣、移除物品、交易技能經驗）
+- `shopItemsForNPC(_:)` — 回傳 NPC 可購買商品列表（含價格、庫存）
+- `sellableItems()` — 回傳玩家可出售物品（排除裝備中物品）
 - `saveGame()` — 存檔
 - `appendMessage(_ text:)` — 訊息管理
 - `onAppear()` — 初始場景描述
@@ -78,6 +86,7 @@ TextGame
 - `CombatMonster` — 戰鬥中怪物運行時狀態（包裝 `MonsterTemplate` + 可變 `currentHealth`）
 - `RoundResult` — 回合結果列舉（continues / monsterDefeated / playerDefeated）
 - `CombatCalculator` — 純函數戰鬥計算器（命中/閃避/傷害公式）
+- `TradeCalculator` — 純函數交易計算器（購買價/出售價公式）
 
 ---
 
@@ -103,7 +112,7 @@ TextGame
 | **主要 Class** | `GameView` |
 | **主要檔案** | `Views/GameView.swift` |
 | **模組責任** | UI 渲染、將使用者操作轉發給 GameEngine、訊息顏色判斷 |
-| **與其他模組的關係** | 初始化並持有 `GameEngine`（`@State`）；導航至 SkillView / InventoryView / StatusView（傳入 character） |
+| **與其他模組的關係** | 初始化並持有 `GameEngine`（`@State`）；導航至 SkillView / InventoryView / StatusView（傳入 character）；掛載 ShopView（`.sheet`） |
 
 ### 3.3 SkillView
 
@@ -127,16 +136,27 @@ TextGame
 | **模組責任** | 接收 `PlayerCharacter`，按 7 個裝備部位顯示裝備狀態，列出背包中未裝備物品 |
 | **與其他模組的關係** | 依賴 `PlayerCharacter.inventory`、`GameItem`、`EquipmentSlot` |
 
-### 3.5 StatusView
+### 3.5 ShopView
+
+| 項目 | 內容 |
+|------|------|
+| **模組名稱** | 商店頁面 |
+| **功能說明** | NPC 商店購買/出售介面 |
+| **主要 Class** | `ShopView` |
+| **主要檔案** | `Views/ShopView.swift` |
+| **模組責任** | 以 `.sheet` 呈現，顯示金幣餘額、購買/出售分頁（Segmented Picker）、商品價格與庫存、出售價格 |
+| **與其他模組的關係** | 接收 `NPCTemplate`、`PlayerCharacter`、`GameEngine`；呼叫 `engine.buyItem()` / `engine.sellItem()` |
+
+### 3.6 StatusView
 
 | 項目 | 內容 |
 |------|------|
 | **模組名稱** | 屬性頁面 |
-| **功能說明** | 顯示角色基本資訊、六大屬性與三大狀態值 |
+| **功能說明** | 顯示角色基本資訊、六大屬性、三大狀態值與金幣 |
 | **主要 Class** | `StatusView` |
 | **主要檔案** | `Views/StatusView.swift` |
-| **模組責任** | 接收 `PlayerCharacter`，顯示名稱/職業/等階/經驗值進度條、六大屬性、生命/魔力/體力 |
-| **與其他模組的關係** | 依賴 `PlayerCharacter`（含 `experience`、`experienceToNextCircle`）、`Guild.displayName` |
+| **模組責任** | 接收 `PlayerCharacter`，顯示名稱/職業/等階/經驗值進度條、六大屬性、生命/魔力/體力、金幣餘額 |
+| **與其他模組的關係** | 依賴 `PlayerCharacter`（含 `experience`、`experienceToNextCircle`、`gold`）、`Guild.displayName` |
 
 ---
 
@@ -148,7 +168,7 @@ TextGame
 |------|------|
 | **功能說明** | 玩家角色核心資料 |
 | **主要檔案** | `Models/PlayerCharacter.swift` |
-| **責任** | 儲存角色基本資訊（名稱、職業、等階）、六大屬性、三大狀態值、經驗值、目前位置；提供戰鬥輔助計算屬性與升級機制 |
+| **責任** | 儲存角色基本資訊（名稱、職業、等階）、六大屬性、三大狀態值、經驗值、金幣、目前位置；提供戰鬥輔助計算屬性與升級機制 |
 | **初始化** | 從 `GuildTemplateLoader` 取得 `baseStats` 設定屬性，使用 `StatusFormula` 計算狀態值，具備 fallback |
 | **關聯** | `@Relationship` → `[Skill]`（技能列表）、`[GameItem]`（背包物品） |
 | **經驗值屬性** | `experience: Int`（持久化）、`experienceToNextCircle: Int`（`@Transient`，公式：circle × 50 + 50） |
@@ -205,7 +225,7 @@ TextGame
 | **功能說明** | 怪物定義與載入 |
 | **主要檔案** | `Models/MonsterTemplate.swift` |
 | **責任** | 從 `monsters.json` 載入怪物資料；支援按場景/等級篩選；透過 `lootTableId` 引用掉落表 |
-| **JSON 資料** | 4 種怪物：兔子、雞、野豬、灰狼 |
+| **JSON 資料** | 6 種怪物：兔子、雞、野豬、灰狼、哥布林、山賊 |
 
 ### 5.3 NPCTemplate / NPCTemplateLoader
 
@@ -223,7 +243,7 @@ TextGame
 | **功能說明** | 物品模板定義與載入 |
 | **主要檔案** | `Models/ItemTemplate.swift` |
 | **責任** | 從 `items.json` 載入物品模板；作為建立 `GameItem` 實例的藍圖 |
-| **JSON 資料** | 15 種物品：武器（4）、防具（5）、消耗品（3）、素材（2）、職業專用（1） |
+| **JSON 資料** | 16 種物品：武器（4）、防具（5）、消耗品（3）、素材（2）、雜物（1）、職業專用（1） |
 
 ### 5.5 GuildTemplate / GuildTemplateLoader
 
@@ -243,7 +263,7 @@ TextGame
 | **主要檔案** | `Models/LootTableTemplate.swift` |
 | **責任** | 從 `loot_tables.json` 載入掉落表資料；定義每個掉落項目的物品 ID、掉落機率與數量範圍（minQuantity~maxQuantity） |
 | **資料結構** | `LootTableTemplate` → `LootEntry`（itemId、dropRate、minQuantity、maxQuantity） |
-| **JSON 資料** | 2 張掉落表：兔子掉落表、雞掉落表 |
+| **JSON 資料** | 4 張掉落表：兔子掉落表、雞掉落表、哥布林掉落表（金幣）、山賊掉落表（金幣+藥水） |
 | **與其他模組的關係** | 被 `GameEngine.processLoot()` 查詢使用；`MonsterTemplate.lootTableId` 引用掉落表 ID |
 
 ---
@@ -266,12 +286,12 @@ TextGame
 
 | 檔案 | 類別碼 | 內容 | 資料量 |
 |------|:------:|------|--------|
-| `items.json` | `01_` | 物品模板（屬性、修正、條件） | 15 種物品 |
-| `monsters.json` | `02_` | 怪物定義（屬性、lootTableId、出沒場景） | 4 種怪物 |
+| `items.json` | `01_` | 物品模板（屬性、修正、條件） | 16 種物品 |
+| `monsters.json` | `02_` | 怪物定義（屬性、lootTableId、出沒場景） | 6 種怪物 |
 | `scenes.json` | `03_` | 場景定義（名稱、描述、出口、怪物、NPC） | 6 個場景 |
 | `npcs.json` | `04_` | NPC 定義（對話、商店、服務類型） | 7 個 NPC |
 | `guilds.json` | `05_` | 職業定義（屬性、技能、公式） | 5 種職業 |
-| `loot_tables.json` | `06_` | 掉落表定義（物品、機率、數量範圍） | 2 張掉落表 |
+| `loot_tables.json` | `06_` | 掉落表定義（物品、機率、數量範圍） | 4 張掉落表 |
 
 ---
 
@@ -287,4 +307,5 @@ TextGame
 | `TemplateLoaderTests.swift` | 6 個 Loader 載入驗證、資料查詢 | 15 |
 | `NPCTemplateTests.swift` | 條件對話過濾、商人判定 | 6 |
 | `CombatTests.swift` | 戰鬥公式（命中/閃避/傷害 clamping）、CombatMonster 狀態、角色戰鬥屬性、武器技能映射 | 26 |
-| **合計** | | **86（不含 UI 測試）** |
+| `TradeTests.swift` | 交易價格計算（購買價、出售價、交易技能加成、角色初始金幣） | 11 |
+| **合計** | | **97（不含 UI 測試）** |

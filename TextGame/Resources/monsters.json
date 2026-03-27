@@ -51,6 +51,32 @@
             "experience": 20,
             "lootTableId": null,
             "spawnScenes": ["03_05_deep_mountain"]
+        },
+        {
+            "id": "02_05_goblin",
+            "name": "哥布林",
+            "description": "一隻矮小的綠皮生物，手裡攥著一把破舊的短刀。牠的眼中閃爍著狡猾的光芒。",
+            "icon": "figure.fencing",
+            "level": 2,
+            "health": 25,
+            "attack": 5,
+            "defense": 2,
+            "experience": 10,
+            "lootTableId": "06_03_loot_goblin",
+            "spawnScenes": ["03_06_forest_path"]
+        },
+        {
+            "id": "02_06_bandit",
+            "name": "山賊",
+            "description": "一名蒙面的山賊，身穿破舊的皮甲，手持一把彎刀。他正虎視眈眈地盯著過路的旅人。",
+            "icon": "figure.martial.arts",
+            "level": 5,
+            "health": 55,
+            "attack": 12,
+            "defense": 5,
+            "experience": 25,
+            "lootTableId": "06_04_loot_bandit",
+            "spawnScenes": ["03_05_deep_mountain"]
         }
     ]
 }

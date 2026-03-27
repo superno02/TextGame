@@ -1,6 +1,6 @@
 # ImportantFlows.md — 重要流程文件
 
-> 最後更新：2026-03-27（新增手動存檔按鈕）
+> 最後更新：2026-03-27（新增物品交易系統）
 
 ---
 
@@ -35,11 +35,11 @@ WindowGroup
 ```
 各 TemplateLoader.shared 首次存取時（lazy init）
   ├─ SceneTemplateLoader → 載入 scenes.json（6 個場景）
-  ├─ MonsterTemplateLoader → 載入 monsters.json（4 種怪物）
+  ├─ MonsterTemplateLoader → 載入 monsters.json（6 種怪物）
   ├─ NPCTemplateLoader → 載入 npcs.json（7 個 NPC）
-  ├─ ItemTemplateLoader → 載入 items.json（15 種物品）
+  ├─ ItemTemplateLoader → 載入 items.json（16 種物品）
   ├─ GuildTemplateLoader → 載入 guilds.json（5 種職業）
-  └─ LootTableLoader → 載入 loot_tables.json（2 張掉落表）
+  └─ LootTableLoader → 載入 loot_tables.json（4 張掉落表）
 
 每個 Loader 載入失敗時會設定 loadError: String?
 ```
@@ -206,6 +206,7 @@ engine.moveToScene(sceneId)
   ├─ 從 scenes 字典查詢目標場景
   ├─ 更新 engine.currentSceneId
   ├─ 同步更新 character.currentSceneId（持久化）
+  ├─ npcStocks.removeAll()（重置 NPC 庫存）
   ├─ appendMessage("——————————")
   ├─ appendMessage("你來到了【場景名稱】")
   └─ appendMessage(場景描述)
@@ -283,14 +284,18 @@ handleVictory() → processLoot(monster:, character:)
   │
   ├─ 遍歷 lootTable.entries（LootEntry）
   │   ├─ 擲骰 < entry.dropRate → 掉落成功
-  │   │   ├─ ItemTemplateLoader.template(for: entry.itemId)
   │   │   ├─ 決定數量 → Int.random(in: minQuantity...maxQuantity)
-  │   │   ├─ 逐一加入背包：
-  │   │   │   ├─ 背包已有相同物品且可堆疊且未滿？
-  │   │   │   │   ├─ 是 → stackCount += 1
-  │   │   │   │   └─ 否 → GameItem(from: template) → 加入 inventory
-  │   │   │   └─ 重複 quantity 次
-  │   │   └─ appendMessage("你獲得了【物品名】。" 或 "...x數量。")
+  │   │   ├─ entry.itemId == "01_16_gold_coin"？
+  │   │   │   ├─ 是 → character.gold += quantity
+  │   │   │   │   └─ appendMessage("你獲得了 N 金幣。")
+  │   │   │   └─ 否 → 一般物品處理：
+  │   │   │       ├─ ItemTemplateLoader.template(for: entry.itemId)
+  │   │   │       ├─ 逐一加入背包：
+  │   │   │       │   ├─ 背包已有相同物品且可堆疊且未滿？
+  │   │   │       │   │   ├─ 是 → stackCount += 1
+  │   │   │       │   │   └─ 否 → GameItem(from: template) → 加入 inventory
+  │   │   │       │   └─ 重複 quantity 次
+  │   │   │       └─ appendMessage("你獲得了【物品名】。" 或 "...x數量。")
   │   └─ 擲骰 >= entry.dropRate → 未掉落
   │
   └─ 結束
@@ -340,7 +345,17 @@ engine.talkToNPC(npc)
   │
   ├─ appendMessage("你向【NPC名】搭話。")
   ├─ 若無可用對話 → "沒有說話。"
-  └─ 若有對話 → 隨機選擇一段顯示
+  ├─ 若有對話 → 隨機選擇一段顯示
+  │
+  ├─ 檢查 NPC 是否為商人（npc.shopItems?.isEmpty == false）
+  │   ├─ 是 → currentShopNPC = npc（暫存，等 talkSheet dismiss 後開啟商店）
+  │   └─ 否 → 結束
+  │
+  ▼
+GameView talkSheet.onDismiss
+  ├─ currentShopNPC != nil？
+  │   ├─ 是 → showShopSheet = true（開啟商店介面）
+  │   └─ 否 → 結束
 ```
 
 ---
@@ -560,4 +575,79 @@ init() → loadTemplates() / loadData()
 
 GameEngine.init() 中統一檢查所有 loadError
   └─ 有錯誤 → appendMessage("[系統錯誤] ...")
+```
+
+---
+
+## 13. Shop Trade Flow（商店交易流程）
+
+### 相關 Class
+`GameView` → `GameEngine` → `NPCTemplateLoader` → `ItemTemplateLoader` → `TradeCalculator` → `ShopView` → `PlayerCharacter` → `GameItem` → `Skill`
+
+### 流程說明
+
+```
+NPC 對話流程觸發商店（見 §7）
+  │
+  ▼
+talkSheet dismiss → engine.currentShopNPC != nil
+  │
+  ▼
+engine.showShopSheet = true
+  │
+  ▼
+ShopView（.sheet, presentationDetents: [.medium, .large]）
+  │
+  ├─ 頂部：顯示金幣餘額（character.gold）
+  ├─ Segmented Picker（購買 / 出售）
+  │
+  ├─ 【購買】
+  │   ├─ engine.shopItemsForNPC(npc)
+  │   │   ├─ 遍歷 npc.shopItems
+  │   │   ├─ ItemTemplateLoader.template(for: itemId)
+  │   │   └─ TradeCalculator.buyPrice(baseValue:, priceMultiplier:)
+  │   │
+  │   └─ 使用者點擊購買
+  │       ├─ engine.buyItem(from: npc, shopItem:)
+  │       │   ├─ 金幣不足？ → appendMessage("金幣不足！") → 結束
+  │       │   ├─ 庫存售罄？ → appendMessage("已經賣完了。") → 結束
+  │       │   ├─ character.gold -= buyPrice
+  │       │   ├─ npcStocks 扣減庫存（有限庫存時）
+  │       │   ├─ 加入背包（堆疊判斷同掉落物邏輯）
+  │       │   └─ appendMessage("你用 N 金幣購買了【物品名】。")
+  │       └─ UI 即時更新
+  │
+  └─ 【出售】
+      ├─ engine.sellableItems()
+      │   └─ 背包中未裝備的物品列表
+      │
+      └─ 使用者點擊出售
+          ├─ engine.sellItem(to: npc, item:)
+          │   ├─ TradeCalculator.sellPrice(baseValue:, tradingRank:)
+          │   ├─ character.gold += sellPrice
+          │   ├─ 堆疊物品？ → stackCount -= 1（若為 0 則從背包移除）
+          │   ├─ 非堆疊物品？ → 從背包移除
+          │   ├─ 交易技能經驗（trading skill）
+          │   │   ├─ skill(for: .trading)?.gainFieldExperience(1.0)
+          │   │   └─ skill(for: .trading)?.absorbExperience()
+          │   └─ appendMessage("你賣給{NPC名}一個【物品名】，獲得 N 金幣。")
+          └─ UI 即時更新
+```
+
+### 交易價格公式
+
+```
+購買價 = ceil(物品 value × NPC priceMultiplier)
+出售價 = floor(物品 value × 0.5 × (1 + 交易技能等級 × 0.01))，最低 1
+```
+
+### NPC 庫存機制
+
+```
+NPC 商品 stock 值：
+  ├─ stock == -1 → 無限庫存（顯示 ∞）
+  └─ stock > 0 → 有限庫存
+      ├─ 首次存取 → 初始化 npcStocks[npcId][itemId] = stock
+      ├─ 購買成功 → npcStocks[npcId][itemId] -= 1
+      └─ 場景切換 → npcStocks.removeAll()（庫存重置）
 ```

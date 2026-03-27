@@ -1,6 +1,6 @@
 # DependencyMap.md — 依賴關係圖
 
-> 最後更新：2026-03-27（JSON ID 流水號前綴化）
+> 最後更新：2026-03-27（新增物品交易系統）
 
 ---
 
@@ -28,7 +28,8 @@ GameView
   ├── @State GameEngine?（.task 中初始化）
   ├── SkillView(character:)（NavigationLink）
   ├── InventoryView(character:)（NavigationLink）
-  └── StatusView(character:)（NavigationLink）
+  ├── StatusView(character:)（NavigationLink）
+  └── ShopView(npc:, character:, engine:)（.sheet，talkSheet dismiss 後觸發）
 
 GameEngine（@Observable）
   ├── ModelContext（init 注入）
@@ -45,6 +46,8 @@ GameEngine（@Observable）
   ├── LootTableLoader.shared（掉落表查詢）
   ├── CombatMonster（戰鬥運行時狀態）
   ├── CombatCalculator（戰鬥公式計算）
+  ├── TradeCalculator（交易價格計算）
+  ├── npcStocks: [String: [String: Int]]（NPC 庫存運行時追蹤）
   └── loadError 檢查 → 6 個 Loader
 
 SkillView
@@ -53,8 +56,13 @@ SkillView
 InventoryView
   └── PlayerCharacter.inventory → [GameItem]
 
+ShopView
+  ├── NPCTemplate（NPC 商店資料）
+  ├── PlayerCharacter（金幣餘額、背包物品）
+  └── GameEngine（buyItem / sellItem / shopItemsForNPC / sellableItems）
+
 StatusView
-  └── PlayerCharacter（直接讀取屬性）
+  └── PlayerCharacter（直接讀取屬性，含 gold）
 ```
 
 ---
@@ -65,6 +73,7 @@ StatusView
 PlayerCharacter（@Model）
   ├── Guild（列舉，透過 guildRawValue）
   ├── GuildTemplateLoader（init 時取得 baseStats + StatusFormula；升級時取得 CircleGrowth）
+  ├── gold: Int（金幣，初始 100）
   ├── experience: Int（經驗值）→ gainExperience() → performLevelUp()
   ├── Skill[]（@Relationship, cascade delete）
   │   └── SkillType（列舉）
@@ -151,6 +160,9 @@ GameEngine
   → ItemTemplateLoader.shared.template(for:)（掉落物品模板查詢）
   → PlayerCharacter.skill(for:)（技能查詢）
   → Skill.gainFieldExperience() / absorbExperience()（技能經驗）
+  → TradeCalculator.buyPrice() / sellPrice()（交易價格計算）
+  → NPCTemplate.shopItems（NPC 商品列表）
+  → npcStocks（NPC 庫存運行時追蹤）
   → SaveSlot.updateSaveInfo()（存檔）
   → modelContext.save()（持久化）
 ```
@@ -166,10 +178,19 @@ InventoryView(character:)
   → character.inventory.filter { !$0.isEquipped }（背包）
   → EquipmentSlot.allCases（7 個部位）
 
+ShopView(npc:, character:, engine:)
+  → npc.shopItems（NPC 商品列表）
+  → engine.shopItemsForNPC(npc)（可購買商品 + 價格 + 庫存）
+  → engine.sellableItems()（可出售物品）
+  → engine.buyItem(from:, shopItem:)（購買）
+  → engine.sellItem(to:, item:)（出售）
+  → character.gold（金幣餘額）
+
 StatusView(character:)
   → character.guild.displayName / circle / strength / ...
   → character.experience / experienceToNextCircle（經驗值進度條）
   → character.currentHealth / maxHealth / ...
+  → character.gold（金幣餘額）
 ```
 
 ---
@@ -254,6 +275,17 @@ GameView → GameEngine → MonsterTemplateLoader → MonsterTemplate
 GameView → GameEngine → SceneTemplateLoader（場景 NPC IDs）
                       → NPCTemplateLoader（NPC 模板）
                       → NPCTemplate.availableDialogues（條件過濾）
+                      → 商人 NPC → currentShopNPC 設定
+```
+
+### 商店交易鏈
+```
+GameView talkSheet.onDismiss → engine.showShopSheet = true
+  → ShopView(npc:, character:, engine:)
+    → engine.shopItemsForNPC(npc) → NPCTemplate.shopItems → ItemTemplateLoader → TradeCalculator.buyPrice()
+    → engine.buyItem() → character.gold -= price, npcStocks 扣減, GameItem 加入背包
+    → engine.sellableItems() → character.inventory（未裝備物品）
+    → engine.sellItem() → TradeCalculator.sellPrice(), character.gold += price, Skill.trading 經驗
 ```
 
 ### 存檔鏈
@@ -266,6 +298,7 @@ GameView.scenePhase(.inactive) → engine.saveGame()
 ```
 GameView → engine.currentSaveSlot?.character
   → SkillView(character:) / InventoryView(character:) / StatusView(character:)
+  → ShopView(npc:, character:, engine:)（由 talkSheet dismiss 觸發）
 ```
 
 ### 角色建立鏈

@@ -84,8 +84,22 @@ struct GameView: View {
         .sheet(isPresented: Binding(
             get: { engine.showTalkSheet },
             set: { engine.showTalkSheet = $0 }
-        )) {
+        ), onDismiss: {
+            // 談話彈窗關閉後，若有待開啟的商店則開啟
+            if engine.currentShopNPC != nil {
+                engine.showShopSheet = true
+            }
+        }) {
             talkSheet(engine: engine)
+        }
+        .sheet(isPresented: Binding(
+            get: { engine.showShopSheet },
+            set: { engine.showShopSheet = $0 }
+        )) {
+            if let npc = engine.currentShopNPC,
+               let character = engine.currentSaveSlot?.character {
+                ShopView(npc: npc, character: character, engine: engine)
+            }
         }
         .onAppear {
             engine.onAppear()
@@ -304,6 +318,12 @@ struct GameView: View {
             return .orange
         } else if message.contains("擊敗了") || message.contains("意識逐漸模糊") || message.contains("醒來") {
             return .purple
+        } else if message.contains("購買了") {
+            return .yellow
+        } else if message.contains("賣給了") {
+            return .green
+        } else if message.contains("金幣不足") || message.contains("賣完了") {
+            return .red
         } else if message.hasPrefix("你獲得了") {
             return .yellow
         } else if message.contains("閃開了") {

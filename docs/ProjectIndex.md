@@ -1,6 +1,6 @@
 # TextGame 專案索引
 
-> 最後更新：2026-03-27（新增手動存檔按鈕）
+> 最後更新：2026-03-27（新增物品交易系統）
 
 ## 文檔導覽
 
@@ -71,12 +71,13 @@
 | 檔案 | 用途 |
 |------|------|
 | `TextGameApp.swift` | App 進入點，啟動時顯示 StartView，設定 SwiftData ModelContainer |
-| `Engine/GameEngine.swift` | 遊戲引擎（@Observable），管理訊息、場景、攻擊、對話、存檔等邏輯 |
+| `Engine/GameEngine.swift` | 遊戲引擎（@Observable），管理訊息、場景、攻擊、對話、商店交易、存檔等邏輯 |
 | `Views/StartView.swift` | 遊戲開始頁面，提供「開始遊戲」與「讀取存檔」選項，支援左滑刪除存檔 |
 | `Views/GameView.swift` | 遊戲主畫面（純 UI 層），初始化 Engine 並轉發操作，含手動存檔按鈕 |
 | `Views/SkillView.swift` | 技能頁面，按 4 大分類顯示角色技能與熟練度進度條 |
 | `Views/InventoryView.swift` | 背包頁面，顯示 7 個裝備部位與背包物品列表 |
-| `Views/StatusView.swift` | 屬性頁面，顯示角色基本資訊、六大屬性與三大狀態值 |
+| `Views/ShopView.swift` | 商店頁面，購買/出售分頁，顯示金幣餘額、商品價格與庫存 |
+| `Views/StatusView.swift` | 屬性頁面，顯示角色基本資訊、六大屬性、三大狀態值與金幣 |
 | `Models/Enums.swift` | 列舉定義：職業(Guild)、技能分類(SkillCategory)、技能類型(SkillType)、裝備欄位(EquipmentSlot) |
 | `Models/PlayerCharacter.swift` | 玩家角色 Model，從 GuildTemplateLoader 取得初始屬性，含技能與背包關聯、經驗值與等階升級 |
 | `Models/Skill.swift` | 技能 Model，含技能類型、等級、經驗值與實戰經驗吸收機制 |
@@ -106,10 +107,10 @@
 | 檔案 | 內容 | 資料量 |
 |------|------|--------|
 | `Resources/scenes.json` | 場景定義 | 6 個場景 |
-| `Resources/monsters.json` | 怪物定義（透過 lootTableId 引用掉落表） | 4 種怪物 |
-| `Resources/loot_tables.json` | 掉落表定義（物品、機率、數量範圍） | 2 張掉落表 |
+| `Resources/monsters.json` | 怪物定義（透過 lootTableId 引用掉落表） | 6 種怪物 |
+| `Resources/loot_tables.json` | 掉落表定義（物品、機率、數量範圍） | 4 張掉落表 |
 | `Resources/npcs.json` | NPC 定義 | 7 個 NPC |
-| `Resources/items.json` | 物品模板 | 15 種物品 |
+| `Resources/items.json` | 物品模板 | 16 種物品 |
 | `Resources/guilds.json` | 職業定義 | 5 種職業 |
 
 ### 測試檔案
@@ -122,6 +123,7 @@
 | `TemplateLoaderTests.swift` | 6 個 Loader 載入驗證 | 15 |
 | `NPCTemplateTests.swift` | 條件對話、商人判定 | 6 |
 | `CombatTests.swift` | 戰鬥公式、命中/閃避/傷害計算、CombatMonster、武器技能映射 | 26 |
+| `TradeTests.swift` | 交易價格計算（購買價、出售價、交易技能加成、角色初始金幣） | 11 |
 
 ---
 
@@ -152,7 +154,7 @@
 - [x] StatusView 完整實作（基本資訊、六大屬性、三大狀態值）
 - [x] 6 個 TemplateLoader 新增 loadError 追蹤，GameEngine 啟動時統一檢查
 - [x] NPC 談話功能（條件式對話過濾）
-- [x] 單元測試 57 個（Swift Testing 框架）
+- [x] 單元測試 97 個（Swift Testing 框架）
 - [x] 技術文件 7 份（docs/ 資料夾）
 - [x] 戰鬥系統實作（回合制自動戰鬥、命中/閃避/傷害公式、掉落物、死亡處理）
 - [x] 技能使用與經驗值獲取（戰鬥中自動觸發武器/防具/閃避技能經驗）
@@ -175,10 +177,19 @@
 - [x] 所有 Swift 原始碼與測試檔中的硬編碼 ID 同步更新
 - [x] 存檔刪除功能（讀取存檔彈窗中左滑刪除，含二次確認，cascade 刪除角色資料）
 - [x] GameView 手動存檔按鈕（toolbar 右上角，點擊觸發 saveGame() 並顯示「存檔完成。」訊息）
+- [x] 物品交易系統（商店購買/出售、金幣系統、TradeCalculator 價格公式）
+- [x] PlayerCharacter 新增 gold 欄位（初始 100 金幣）
+- [x] ShopView 商店介面（購買/出售分頁、金幣餘額、庫存顯示）
+- [x] NPC 商人談話後自動開啟商店（talkSheet dismiss → shopSheet open 時序處理）
+- [x] 金幣掉落系統（人形怪物掉落金幣，processLoot 特殊處理 gold_coin）
+- [x] NPC 有限庫存管理（運行時追蹤，場景切換時重置）
+- [x] 出售物品交易技能經驗（每級 +1% 售價加成）
+- [x] 新增人形怪物（哥布林、山賊）與對應掉落表
+- [x] StatusView 顯示金幣
+- [x] 交易系統單元測試 11 個（TradeTests.swift）
 
 ### 待開發
 - [ ] 物品裝備/使用互動（背包內操作）
-- [ ] NPC 商店系統（買賣物品）
 - [ ] 角色職業選擇流程（目前預設無業遊民）
 - [ ] 存檔槽位已滿處理
 - [ ] 戰鬥中使用消耗品（目前戰鬥為全自動）

@@ -509,6 +509,40 @@
                 "wisdom": 0,
                 "charisma": 0
             }
+        },
+        {
+            "id": "01_16_gold_coin",
+            "name": "金幣",
+            "description": "閃閃發光的金幣，是這個世界通用的貨幣。",
+            "type": "misc",
+            "equipSlot": null,
+            "rarity": 0,
+            "maxStack": 9999,
+            "value": 1,
+            "attackPower": 0,
+            "defensePower": 0,
+            "healAmount": 0,
+            "statModifiers": {
+                "strength": 0,
+                "agility": 0,
+                "constitution": 0,
+                "intelligence": 0,
+                "wisdom": 0,
+                "charisma": 0,
+                "maxHealth": 0,
+                "maxMana": 0,
+                "maxStamina": 0
+            },
+            "requirements": {
+                "circle": 0,
+                "guilds": [],
+                "strength": 0,
+                "agility": 0,
+                "constitution": 0,
+                "intelligence": 0,
+                "wisdom": 0,
+                "charisma": 0
+            }
         }
     ]
 }

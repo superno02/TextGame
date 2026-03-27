@@ -68,6 +68,22 @@ enum CombatCalculator {
     }
 }
 
+/// 交易數值計算器（純函數，方便測試）
+enum TradeCalculator {
+
+    /// 購買價 = value × priceMultiplier（向上取整）
+    static func buyPrice(baseValue: Int, priceMultiplier: Double) -> Int {
+        Int(ceil(Double(baseValue) * priceMultiplier))
+    }
+
+    /// 出售價 = value × 0.5 × (1 + tradingRank × 0.01)（向下取整，最低 1）
+    static func sellPrice(baseValue: Int, tradingRank: Int = 0) -> Int {
+        let bonus = 1.0 + Double(tradingRank) * 0.01
+        let price = Double(baseValue) * 0.5 * bonus
+        return max(Int(floor(price)), 1)
+    }
+}
+
 /// 遊戲引擎，負責管理遊戲邏輯狀態（場景、訊息、攻擊、對話、存檔）
 @Observable
 final class GameEngine {
@@ -90,6 +106,14 @@ final class GameEngine {
 
     var isInCombat: Bool = false
     private var combatMonster: CombatMonster?
+
+    // MARK: - 商店狀態
+
+    var showShopSheet = false
+    var currentShopNPC: NPCTemplate?
+
+    /// NPC 庫存運行時追蹤：[npcId: [itemId: remainingStock]]
+    private var npcStocks: [String: [String: Int]] = [:]
 
     // MARK: - 依賴
 
@@ -169,6 +193,8 @@ final class GameEngine {
         if let character = currentSaveSlot?.character {
             character.currentSceneId = sceneId
         }
+        // 重置 NPC 庫存（進入新場景時刷新）
+        npcStocks.removeAll()
         appendMessage("——————————")
         appendMessage("你來到了【\(scene.name)】")
         appendMessage(scene.description)
@@ -378,6 +404,9 @@ final class GameEngine {
         combatMonster = nil
     }
 
+    /// 金幣物品 ID 常數
+    private static let goldCoinItemId = "01_16_gold_coin"
+
     /// 掉落物處理
     private func processLoot(monster: MonsterTemplate, character: PlayerCharacter) {
         guard let lootTableId = monster.lootTableId,
@@ -391,6 +420,13 @@ final class GameEngine {
             guard let template = itemLoader.template(for: entry.itemId) else { continue }
 
             let quantity = Int.random(in: entry.minQuantity...entry.maxQuantity)
+
+            // 金幣特殊處理：直接加到 gold 欄位
+            if entry.itemId == Self.goldCoinItemId {
+                character.gold += quantity
+                appendMessage("你獲得了 \(quantity) 金幣。")
+                continue
+            }
 
             // 逐一加入背包（尊重堆疊上限）
             for _ in 0..<quantity {
@@ -479,6 +515,121 @@ final class GameEngine {
                 appendMessage("「\(dialogue.text)」")
             }
         }
+
+        // 如果是商人，標記待開啟商店（由 View 在 talkSheet dismiss 後觸發）
+        if npc.isMerchant {
+            currentShopNPC = npc
+        }
+    }
+
+    // MARK: - 商店系統
+
+    /// 取得或初始化指定 NPC 的庫存
+    private func stockForNPC(_ npc: NPCTemplate) -> [String: Int] {
+        if let existing = npcStocks[npc.id] {
+            return existing
+        }
+        var stock: [String: Int] = [:]
+        for shopItem in npc.shopItems {
+            if shopItem.stock >= 0 {
+                stock[shopItem.itemId] = shopItem.stock
+            }
+        }
+        npcStocks[npc.id] = stock
+        return stock
+    }
+
+    /// 查詢某 NPC 某物品的剩餘庫存（-1 表示無限）
+    func remainingStock(npc: NPCTemplate, itemId: String) -> Int {
+        guard let shopItem = npc.shopItems.first(where: { $0.itemId == itemId }) else {
+            return 0
+        }
+        if shopItem.stock == -1 { return -1 }
+        return stockForNPC(npc)[itemId] ?? 0
+    }
+
+    /// 取得商人的可購買物品列表（帶價格與庫存資訊）
+    func shopItemsForNPC(_ npc: NPCTemplate) -> [(shopItem: NPCShopItem, template: ItemTemplate, price: Int, stock: Int)] {
+        npc.shopItems.compactMap { shopItem in
+            guard let template = itemLoader.template(for: shopItem.itemId) else { return nil }
+            let price = TradeCalculator.buyPrice(baseValue: template.value, priceMultiplier: shopItem.priceMultiplier)
+            let stock = remainingStock(npc: npc, itemId: shopItem.itemId)
+            return (shopItem, template, price, stock)
+        }
+    }
+
+    /// 取得玩家可出售的物品（排除裝備中與任務物品）
+    func sellableItems() -> [GameItem] {
+        guard let character = currentSaveSlot?.character else { return [] }
+        return character.inventory.filter { !$0.isEquipped && $0.itemType != .quest }
+    }
+
+    /// 購買物品
+    func buyItem(from npc: NPCTemplate, shopItem: NPCShopItem) {
+        guard let character = currentSaveSlot?.character else { return }
+        guard let template = itemLoader.template(for: shopItem.itemId) else { return }
+
+        let price = TradeCalculator.buyPrice(
+            baseValue: template.value,
+            priceMultiplier: shopItem.priceMultiplier
+        )
+
+        guard character.gold >= price else {
+            appendMessage("金幣不足！需要 \(price) 金幣，你只有 \(character.gold) 金幣。")
+            return
+        }
+
+        let stock = remainingStock(npc: npc, itemId: shopItem.itemId)
+        guard stock == -1 || stock > 0 else {
+            appendMessage("【\(template.name)】已經賣完了。")
+            return
+        }
+
+        character.gold -= price
+
+        if stock > 0 {
+            npcStocks[npc.id]?[shopItem.itemId] = stock - 1
+        }
+
+        if let existingItem = character.inventory.first(where: {
+            $0.itemId == shopItem.itemId && $0.isStackable && !$0.isStackFull
+        }) {
+            existingItem.stackCount += 1
+        } else {
+            let newItem = GameItem(from: template)
+            character.inventory.append(newItem)
+        }
+
+        appendMessage("你向【\(npc.name)】購買了【\(template.name)】，花費 \(price) 金幣。[餘額: \(character.gold)]")
+    }
+
+    /// 出售物品
+    func sellItem(to npc: NPCTemplate, item: GameItem) {
+        guard let character = currentSaveSlot?.character else { return }
+
+        let tradingRank = character.skill(for: .trading)?.rank ?? 0
+        let price = TradeCalculator.sellPrice(
+            baseValue: item.value,
+            tradingRank: tradingRank
+        )
+
+        character.gold += price
+
+        // 交易技能經驗
+        if let tradingSkill = character.skill(for: .trading) {
+            let expGain = 0.5 + Double(price) * 0.1
+            tradingSkill.gainFieldExperience(expGain)
+            tradingSkill.absorbExperience()
+        }
+
+        let itemName = item.name
+        if item.isStackable && item.stackCount > 1 {
+            item.stackCount -= 1
+        } else {
+            character.inventory.removeAll { $0 === item }
+        }
+
+        appendMessage("你將【\(itemName)】賣給了【\(npc.name)】，獲得 \(price) 金幣。[餘額: \(character.gold)]")
     }
 
     // MARK: - 存檔

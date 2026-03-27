@@ -13,6 +13,21 @@
             "entries": [
                 { "itemId": "01_15_chicken_feather", "dropRate": 0.6, "minQuantity": 1, "maxQuantity": 3 }
             ]
+        },
+        {
+            "id": "06_03_loot_goblin",
+            "name": "哥布林掉落表",
+            "entries": [
+                { "itemId": "01_16_gold_coin", "dropRate": 0.8, "minQuantity": 3, "maxQuantity": 8 }
+            ]
+        },
+        {
+            "id": "06_04_loot_bandit",
+            "name": "山賊掉落表",
+            "entries": [
+                { "itemId": "01_16_gold_coin", "dropRate": 0.9, "minQuantity": 10, "maxQuantity": 25 },
+                { "itemId": "01_09_small_healing_potion", "dropRate": 0.3, "minQuantity": 1, "maxQuantity": 1 }
+            ]
         }
     ]
 }

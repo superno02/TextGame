@@ -40,6 +40,9 @@ final class PlayerCharacter {
     var currentStamina: Int // 目前體力值
     var maxStamina: Int     // 最大體力值
 
+    // MARK: - 金幣
+    var gold: Int           // 持有金幣
+
     // MARK: - 關聯
     @Relationship(deleteRule: .cascade)
     var skills: [Skill] = []
@@ -149,6 +152,7 @@ final class PlayerCharacter {
         self.guildRawValue = guild.rawValue
         self.circle = 1
         self.experience = 0
+        self.gold = 100
         self.currentSceneId = "03_01_village"
 
         // 從職業模板取得基礎屬性，找不到時使用 fallback 預設值

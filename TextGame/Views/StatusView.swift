@@ -46,6 +46,12 @@ struct StatusView: View {
                     )
                     .tint(.yellow)
                 }
+                HStack {
+                    Text("金幣")
+                    Spacer()
+                    Text("\(character.gold)")
+                        .foregroundColor(.yellow)
+                }
             }
 
             Section("屬性") {
