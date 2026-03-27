@@ -133,7 +133,7 @@ struct CombatTests {
         let template = MonsterTemplate(
             id: "test", name: "測試怪", description: "", icon: "hare",
             level: 1, health: 25, attack: 5, defense: 2, experience: 10,
-            loot: [], spawnScenes: []
+            lootTableId: nil, spawnScenes: []
         )
         let monster = CombatMonster(template: template)
         #expect(monster.currentHealth == 25)
@@ -145,7 +145,7 @@ struct CombatTests {
         let template = MonsterTemplate(
             id: "test", name: "測試怪", description: "", icon: "hare",
             level: 1, health: 5, attack: 1, defense: 0, experience: 3,
-            loot: [], spawnScenes: []
+            lootTableId: nil, spawnScenes: []
         )
         var monster = CombatMonster(template: template)
         monster.currentHealth = 0
@@ -185,27 +185,27 @@ struct CombatTests {
 
     @Test("鐵劍對應劍術技能")
     func ironSwordMapsToSword() {
-        #expect(SkillType.weaponSkillType(for: "iron_sword") == .sword)
+        #expect(SkillType.weaponSkillType(for: "01_01_iron_sword") == .sword)
     }
 
     @Test("戰士巨劍對應劍術技能")
     func warriorGreatswordMapsToSword() {
-        #expect(SkillType.weaponSkillType(for: "warrior_greatsword") == .sword)
+        #expect(SkillType.weaponSkillType(for: "01_12_warrior_greatsword") == .sword)
     }
 
     @Test("短弓對應弓術技能")
     func shortBowMapsToBow() {
-        #expect(SkillType.weaponSkillType(for: "short_bow") == .bow)
+        #expect(SkillType.weaponSkillType(for: "01_03_short_bow") == .bow)
     }
 
     @Test("木杖對應杖術技能")
     func woodenStaffMapsToStaff() {
-        #expect(SkillType.weaponSkillType(for: "wooden_staff") == .staff)
+        #expect(SkillType.weaponSkillType(for: "01_02_wooden_staff") == .staff)
     }
 
     @Test("生鏽匕首對應匕首技能")
     func rustyDaggerMapsToDagger() {
-        #expect(SkillType.weaponSkillType(for: "rusty_dagger") == .dagger)
+        #expect(SkillType.weaponSkillType(for: "01_04_rusty_dagger") == .dagger)
     }
 
     @Test("未知武器回傳 nil")

@@ -1,6 +1,6 @@
 # ImportantFlows.md — 重要流程文件
 
-> 最後更新：2026-03-25（經驗值系統、移除體力消耗）
+> 最後更新：2026-03-27（JSON ID 流水號前綴化）
 
 ---
 
@@ -38,7 +38,8 @@ WindowGroup
   ├─ MonsterTemplateLoader → 載入 monsters.json（4 種怪物）
   ├─ NPCTemplateLoader → 載入 npcs.json（7 個 NPC）
   ├─ ItemTemplateLoader → 載入 items.json（15 種物品）
-  └─ GuildTemplateLoader → 載入 guilds.json（5 種職業）
+  ├─ GuildTemplateLoader → 載入 guilds.json（5 種職業）
+  └─ LootTableLoader → 載入 loot_tables.json（2 張掉落表）
 
 每個 Loader 載入失敗時會設定 loadError: String?
 ```
@@ -66,7 +67,7 @@ StartView.startNewGame()
   │   ├─ GuildTemplateLoader.shared.template(for: .none) → baseStats
   │   ├─ 設定六大屬性（從 GuildBaseStats 取得）
   │   ├─ StatusFormula.calculate() → 計算狀態值
-  │   └─ 設定初始位置（village）
+  │   └─ 設定初始位置（03_01_village）
   │
   ├─ 建立 SaveSlot（關聯角色）
   ├─ 插入 ModelContext
@@ -142,7 +143,7 @@ GameEngine.init()
   ├─ 取得 currentSaveSlot（FetchDescriptor）
   ├─ 恢復角色位置 → currentSceneId = character.currentSceneId
   └─ checkTemplateErrors()
-      ├─ 檢查 5 個 Loader 的 loadError
+      ├─ 檢查 6 個 Loader 的 loadError
       └─ 有錯誤 → appendMessage("[系統錯誤] ...")
 ```
 
@@ -183,7 +184,7 @@ engine.moveToScene(sceneId)
 ## 6. Attack & Combat Flow（攻擊與戰鬥流程）
 
 ### 相關 Class
-`GameView` → `GameEngine` → `MonsterTemplateLoader` → `CombatMonster` → `CombatCalculator` → `ItemTemplateLoader` → `PlayerCharacter` → `Skill`
+`GameView` → `GameEngine` → `MonsterTemplateLoader` → `CombatMonster` → `CombatCalculator` → `LootTableLoader` → `ItemTemplateLoader` → `PlayerCharacter` → `Skill`
 
 ### 流程說明
 
@@ -242,16 +243,23 @@ Task { @MainActor } → runCombatLoop()
 ### 掉落物子流程
 
 ```
-handleVictory() → processLoot()
+handleVictory() → processLoot(monster:, character:)
   │
-  ├─ 遍歷 monster.loot
-  │   ├─ 擲骰 < dropRate → 掉落成功
-  │   │   ├─ ItemTemplateLoader.template(for: itemId)
-  │   │   ├─ 背包已有相同物品且可堆疊？
-  │   │   │   ├─ 是 → stackCount += 1
-  │   │   │   └─ 否 → GameItem(from: template) → 加入 inventory
-  │   │   └─ appendMessage("你獲得了【物品名】。")
-  │   └─ 擲骰 >= dropRate → 未掉落
+  ├─ monster.lootTableId 為 nil？ → 結束（無掉落表）
+  ├─ LootTableLoader.shared.template(for: lootTableId) → LootTableTemplate
+  │   └─ 查無掉落表 → 結束
+  │
+  ├─ 遍歷 lootTable.entries（LootEntry）
+  │   ├─ 擲骰 < entry.dropRate → 掉落成功
+  │   │   ├─ ItemTemplateLoader.template(for: entry.itemId)
+  │   │   ├─ 決定數量 → Int.random(in: minQuantity...maxQuantity)
+  │   │   ├─ 逐一加入背包：
+  │   │   │   ├─ 背包已有相同物品且可堆疊且未滿？
+  │   │   │   │   ├─ 是 → stackCount += 1
+  │   │   │   │   └─ 否 → GameItem(from: template) → 加入 inventory
+  │   │   │   └─ 重複 quantity 次
+  │   │   └─ appendMessage("你獲得了【物品名】。" 或 "...x數量。")
+  │   └─ 擲骰 >= entry.dropRate → 未掉落
   │
   └─ 結束
 ```
@@ -264,8 +272,8 @@ handlePlayerDefeat()
   ├─ appendMessage("你被{怪物名}擊敗了...")
   ├─ character.currentHealth = maxHealth / 2（最低 1）
   ├─ character.currentStamina = maxStamina / 2（最低 1）
-  ├─ character.currentSceneId = "village"
-  ├─ currentSceneId = "village"
+  ├─ character.currentSceneId = "03_01_village"
+  ├─ currentSceneId = "03_01_village"
   └─ appendMessage("你在村莊中醒來，身體還很虛弱...")
 ```
 
@@ -296,7 +304,7 @@ engine.talkToNPC(npc)
   ├─ 取得玩家職業（currentSaveSlot?.character?.guild）
   ├─ npc.availableDialogues(playerGuild:) → 過濾條件對話
   │   ├─ condition == nil → 無條件顯示
-  │   └─ condition == "guild:warrior" → 僅戰士可觸發
+  │   └─ condition == "guild:05_02_warrior" → 僅戰士可觸發
   │
   ├─ appendMessage("你向【NPC名】搭話。")
   ├─ 若無可用對話 → "沒有說話。"

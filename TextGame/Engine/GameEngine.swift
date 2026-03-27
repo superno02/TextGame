@@ -78,7 +78,7 @@ final class GameEngine {
 
     // MARK: - 場景狀態
 
-    var currentSceneId: String = "village"
+    var currentSceneId: String = "03_01_village"
 
     // MARK: - 彈窗控制
 
@@ -99,6 +99,7 @@ final class GameEngine {
     private let monsterLoader = MonsterTemplateLoader.shared
     private let npcLoader = NPCTemplateLoader.shared
     private let itemLoader = ItemTemplateLoader.shared
+    private let lootTableLoader = LootTableLoader.shared
 
     // MARK: - 快取
 
@@ -123,7 +124,7 @@ final class GameEngine {
     // MARK: - 計算屬性
 
     var currentScene: GameScene {
-        scenes[currentSceneId] ?? scenes["village"]!
+        scenes[currentSceneId] ?? scenes["03_01_village"]!
     }
 
     var currentSaveSlot: SaveSlot? {
@@ -379,20 +380,33 @@ final class GameEngine {
 
     /// 掉落物處理
     private func processLoot(monster: MonsterTemplate, character: PlayerCharacter) {
-        for loot in monster.loot {
-            let roll = Double.random(in: 0.0..<1.0)
-            guard roll < loot.dropRate else { continue }
-            guard let template = itemLoader.template(for: loot.itemId) else { continue }
+        guard let lootTableId = monster.lootTableId,
+              let lootTable = lootTableLoader.template(for: lootTableId) else {
+            return
+        }
 
-            // 檢查是否已有相同物品且可堆疊
-            if let existingItem = character.inventory.first(where: {
-                $0.itemId == loot.itemId && $0.isStackable && !$0.isStackFull
-            }) {
-                existingItem.stackCount += 1
-                appendMessage("你獲得了【\(template.name)】。(共 \(existingItem.stackCount) 個)")
+        for entry in lootTable.entries {
+            let roll = Double.random(in: 0.0..<1.0)
+            guard roll < entry.dropRate else { continue }
+            guard let template = itemLoader.template(for: entry.itemId) else { continue }
+
+            let quantity = Int.random(in: entry.minQuantity...entry.maxQuantity)
+
+            // 逐一加入背包（尊重堆疊上限）
+            for _ in 0..<quantity {
+                if let existingItem = character.inventory.first(where: {
+                    $0.itemId == entry.itemId && $0.isStackable && !$0.isStackFull
+                }) {
+                    existingItem.stackCount += 1
+                } else {
+                    let newItem = GameItem(from: template)
+                    character.inventory.append(newItem)
+                }
+            }
+
+            if quantity > 1 {
+                appendMessage("你獲得了【\(template.name)】x\(quantity)。")
             } else {
-                let newItem = GameItem(from: template)
-                character.inventory.append(newItem)
                 appendMessage("你獲得了【\(template.name)】。")
             }
         }
@@ -408,7 +422,7 @@ final class GameEngine {
         character.currentHealth = max(character.maxHealth / 2, 1)
         character.currentStamina = max(character.maxStamina / 2, 1)
 
-        let safeSceneId = "village"
+        let safeSceneId = "03_01_village"
         character.currentSceneId = safeSceneId
         currentSceneId = safeSceneId
 
@@ -494,6 +508,7 @@ final class GameEngine {
             ("NPC", NPCTemplateLoader.shared.loadError),
             ("物品", ItemTemplateLoader.shared.loadError),
             ("職業", GuildTemplateLoader.shared.loadError),
+            ("掉落表", LootTableLoader.shared.loadError),
         ]
         for (name, error) in loaders {
             if let error {

@@ -11,11 +11,11 @@ import Foundation
 
 /// 玩家可選擇的職業類型
 enum Guild: String, Codable, CaseIterable {
-    case none = "none"
-    case warrior = "warrior"
-    case mage = "mage"
-    case thief = "thief"
-    case cleric = "cleric"
+    case none = "05_01_none"
+    case warrior = "05_02_warrior"
+    case mage = "05_03_mage"
+    case thief = "05_04_thief"
+    case cleric = "05_05_cleric"
 
     /// 中文顯示名稱
     var displayName: String {
@@ -78,13 +78,13 @@ enum SkillType: String, Codable, CaseIterable {
     /// 根據武器 itemId 推導對應的武器技能類型
     static func weaponSkillType(for itemId: String) -> SkillType? {
         switch itemId {
-        case "iron_sword", "warrior_greatsword":
+        case "01_01_iron_sword", "01_12_warrior_greatsword":
             return .sword
-        case "short_bow":
+        case "01_03_short_bow":
             return .bow
-        case "wooden_staff":
+        case "01_02_wooden_staff":
             return .staff
-        case "rusty_dagger":
+        case "01_04_rusty_dagger":
             return .dagger
         default:
             return nil

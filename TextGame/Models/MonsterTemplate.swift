@@ -7,14 +7,6 @@
 
 import Foundation
 
-// MARK: - 怪物掉落物
-
-/// 怪物掉落物品定義
-struct MonsterLoot: Codable {
-    let itemId: String      // 掉落物品模板 ID
-    let dropRate: Double    // 掉落機率（0.0 ~ 1.0）
-}
-
 // MARK: - 怪物模板
 
 /// 從 JSON 載入的怪物模板定義
@@ -28,7 +20,7 @@ struct MonsterTemplate: Codable, Identifiable {
     let attack: Int             // 攻擊力
     let defense: Int            // 防禦力
     let experience: Int         // 擊殺獲得經驗值
-    let loot: [MonsterLoot]     // 掉落物列表
+    let lootTableId: String?    // 掉落表 ID（nil 表示無掉落物）
     let spawnScenes: [String]   // 可出現的場景 ID 列表
 }
 

@@ -44,7 +44,7 @@ struct GameItemTests {
             name: "戰士專用",
             itemDescription: "測試",
             itemType: .weapon,
-            reqGuilds: ["warrior"]
+            reqGuilds: ["05_02_warrior"]
         )
         let warrior = PlayerCharacter(name: "戰士", guild: .warrior)
         let mage = PlayerCharacter(name: "法師", guild: .mage)

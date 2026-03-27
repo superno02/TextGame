@@ -1,0 +1,18 @@
+{
+    "lootTables": [
+        {
+            "id": "06_01_loot_rabbit",
+            "name": "兔子掉落表",
+            "entries": [
+                { "itemId": "01_14_rabbit_hide", "dropRate": 0.5, "minQuantity": 1, "maxQuantity": 2 }
+            ]
+        },
+        {
+            "id": "06_02_loot_chicken",
+            "name": "雞掉落表",
+            "entries": [
+                { "itemId": "01_15_chicken_feather", "dropRate": 0.6, "minQuantity": 1, "maxQuantity": 3 }
+            ]
+        }
+    ]
+}

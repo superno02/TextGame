@@ -1,6 +1,6 @@
 # ProjectOverview.md — 專案快速理解指南
 
-> 最後更新：2026-03-23（戰鬥系統實作後）
+> 最後更新：2026-03-27（JSON ID 流水號前綴化）
 > 目標：讓新工程師在 5 分鐘內理解此專案
 
 ---
@@ -30,7 +30,7 @@ TextGame 是一款 **iOS 平台的純文字 MUD 風格角色扮演遊戲**，參
 | 存檔 / 讀檔 | ✅ 已完成 | 5 個槽位，離開前景自動存檔 |
 | 遊戲引擎 | ✅ 已完成 | GameEngine（@Observable）管理場景、對話、攻擊、存檔 |
 | 錯誤處理 | ✅ 已完成 | JSON 載入錯誤於訊息區顯示 |
-| 單元測試 | ✅ 已完成 | 76 個 Swift Testing 測試案例（全通過） |
+| 單元測試 | ✅ 已完成 | 86 個 Swift Testing 測試案例（全通過） |
 | 戰鬥系統 | ✅ 已完成 | 回合制自動戰鬥（命中/閃避/傷害/掉落物/死亡/逃跑/技能經驗） |
 | 商店系統 | ⬜ 待開發 | NPC 商店資料已定義 |
 | 職業選擇 | ⬜ 待開發 | 目前固定為無業遊民 |
@@ -46,7 +46,7 @@ TextGame 是一款 **iOS 平台的純文字 MUD 風格角色扮演遊戲**，參
 | **SwiftData** | 資料持久化（角色、技能、物品、存檔） |
 | **Observation** | `@Observable` macro，用於 GameEngine 狀態管理 |
 | **Foundation** | JSON 解碼、基礎資料處理 |
-| **Bundle JSON** | 遊戲靜態資料定義（場景、怪物、NPC、物品模板、職業） |
+| **Bundle JSON** | 遊戲靜態資料定義（場景、怪物、NPC、物品模板、職業、掉落表） |
 | **Swift Testing** | 單元測試框架（`@Test`、`#expect`） |
 
 無使用任何第三方套件。
@@ -82,7 +82,7 @@ StartView（開始頁面）
 
 ### 資料流向
 
-1. **靜態資料**：JSON 檔案 → `*TemplateLoader`（Singleton，App 啟動時自動載入，具備 loadError）→ GameEngine / View 查詢使用
+1. **靜態資料**：JSON 檔案 → `*TemplateLoader`（Singleton，App 啟動時自動載入，具備 loadError）→ GameEngine / View 查詢使用。掉落物定義獨立於 `loot_tables.json`，怪物透過 `lootTableId` 引用
 2. **動態資料**：SwiftData `@Model` ↔ GameEngine（透過 ModelContext / FetchDescriptor）↔ View
 3. **存檔機制**：`scenePhase` 變為 `.inactive` 時 → GameEngine.saveGame()
 
@@ -99,10 +99,10 @@ StartView（開始頁面）
 ### Models 模組
 分為兩類：
 - **持久化 Model**（`@Model`）：`PlayerCharacter`、`Skill`、`GameItem`、`SaveSlot`
-- **模板 / 載入器**：`SceneTemplate`、`MonsterTemplate`、`NPCTemplate`、`ItemTemplate`、`GuildTemplate` 及其對應 Loader（均具備 `loadError` 追蹤）
+- **模板 / 載入器**：`SceneTemplate`、`MonsterTemplate`、`NPCTemplate`、`ItemTemplate`、`GuildTemplate`、`LootTableTemplate` 及其對應 Loader（均具備 `loadError` 追蹤）
 
 ### Resources 模組
-5 個 JSON 檔案定義了遊戲世界的所有靜態內容，是遊戲設計師的主要編輯對象。
+6 個 JSON 檔案定義了遊戲世界的所有靜態內容，是遊戲設計師的主要編輯對象。所有 ID 採用流水號前綴格式（`{類別碼}_{序號}_{原始名稱}`），確保資料可追蹤性。
 
 ### Tests 模組
-6 個測試檔涵蓋：角色初始化（13 項）、技能經驗與升級（9 項）、物品條件判斷（9 項）、模板載入驗證（12 項）、NPC 對話條件（6 項）、戰鬥公式與邏輯（26 項），共 76 個測試案例（不含 UI 測試）。
+6 個測試檔涵蓋：角色初始化（20 項）、技能經驗與升級（9 項）、物品條件判斷（9 項）、模板載入驗證（15 項）、NPC 對話條件（6 項）、戰鬥公式與邏輯（26 項），共 86 個測試案例（不含 UI 測試）。

@@ -1,6 +1,6 @@
 # Modules.md — 功能模組分析
 
-> 最後更新：2026-03-25（經驗值系統、移除體力消耗）
+> 最後更新：2026-03-27（JSON ID 流水號前綴化）
 
 ---
 
@@ -49,7 +49,7 @@ TextGame
 | **主要 Class** | `GameEngine`（`@Observable`） |
 | **主要檔案** | `Engine/GameEngine.swift` |
 | **模組責任** | 訊息管理、場景移動、戰鬥系統、經驗值授予與升級處理、NPC 對話、存檔觸發、模板載入錯誤檢查 |
-| **與其他模組的關係** | 持有 `ModelContext`；依賴 `SceneTemplateLoader`、`MonsterTemplateLoader`、`NPCTemplateLoader`、`ItemTemplateLoader`；操作 `SaveSlot`、`PlayerCharacter`；被 `GameView` 初始化與使用 |
+| **與其他模組的關係** | 持有 `ModelContext`；依賴 `SceneTemplateLoader`、`MonsterTemplateLoader`、`NPCTemplateLoader`、`ItemTemplateLoader`、`LootTableLoader`；操作 `SaveSlot`、`PlayerCharacter`；被 `GameView` 初始化與使用 |
 
 ### 主要屬性
 - `messages: [String]` — 訊息列表（上限 50 筆）
@@ -66,7 +66,7 @@ TextGame
 - `executeMonsterAttack(character:monster:activeSkills:)` — 怪物攻擊階段
 - `handleVictory(monster:character:)` — 勝利處理（經驗值授予、升級判定、掉落物）
 - `handlePlayerDefeat(monster:character:)` — 死亡處理（傳送村莊）
-- `processLoot(monster:character:)` — 掉落物生成與背包處理
+- `processLoot(monster:character:)` — 掉落物處理（查詢 LootTableLoader，支援數量範圍）
 - `grantArmorSkillExperience(...)` — 防具技能經驗發放
 - `absorbCombatSkills(...)` — 回合結束吸收技能經驗
 - `talkToNPC(_ npc:)` — NPC 對話（含條件過濾）
@@ -204,7 +204,7 @@ TextGame
 |------|------|
 | **功能說明** | 怪物定義與載入 |
 | **主要檔案** | `Models/MonsterTemplate.swift` |
-| **責任** | 從 `monsters.json` 載入怪物資料；支援按場景/等級篩選 |
+| **責任** | 從 `monsters.json` 載入怪物資料；支援按場景/等級篩選；透過 `lootTableId` 引用掉落表 |
 | **JSON 資料** | 4 種怪物：兔子、雞、野豬、灰狼 |
 
 ### 5.3 NPCTemplate / NPCTemplateLoader
@@ -235,6 +235,17 @@ TextGame
 | **資料結構** | `GuildTemplate` → `GuildBaseStats`、`StatusFormula`、`CircleGrowth`（每次升級六大屬性成長值，合計 +6） |
 | **JSON 資料** | 5 種職業：無業遊民、戰士、法師、盜賊、牧師 |
 
+### 5.6 LootTableTemplate / LootTableLoader
+
+| 項目 | 內容 |
+|------|------|
+| **功能說明** | 掉落表定義與載入 |
+| **主要檔案** | `Models/LootTableTemplate.swift` |
+| **責任** | 從 `loot_tables.json` 載入掉落表資料；定義每個掉落項目的物品 ID、掉落機率與數量範圍（minQuantity~maxQuantity） |
+| **資料結構** | `LootTableTemplate` → `LootEntry`（itemId、dropRate、minQuantity、maxQuantity） |
+| **JSON 資料** | 2 張掉落表：兔子掉落表、雞掉落表 |
+| **與其他模組的關係** | 被 `GameEngine.processLoot()` 查詢使用；`MonsterTemplate.lootTableId` 引用掉落表 ID |
+
 ---
 
 ## 6. Enums 模組
@@ -245,19 +256,22 @@ TextGame
 | **主要檔案** | `Models/Enums.swift`、`Models/GameItem.swift`（`ItemType`） |
 | **包含列舉** | `Guild`（5 種職業）、`SkillCategory`（5 大分類）、`SkillType`（21 種技能）、`EquipmentSlot`（7 個部位）、`ItemType`（6 種物品類型） |
 | **特色** | 所有列舉均提供中文 `displayName` 計算屬性 |
-| **戰鬥相關** | `SkillType.weaponSkillType(for: String) -> SkillType?` — 將武器物品 ID 映射到對應的武器技能類型 |
+| **戰鬥相關** | `SkillType.weaponSkillType(for: String) -> SkillType?` — 將武器物品 ID（含流水號前綴，如 `01_01_iron_sword`）映射到對應的武器技能類型 |
 
 ---
 
 ## 7. Resources 模組
 
-| 檔案 | 內容 | 資料量 |
-|------|------|--------|
-| `scenes.json` | 場景定義（名稱、描述、出口、怪物、NPC） | 6 個場景 |
-| `monsters.json` | 怪物定義（屬性、掉落物、出沒場景） | 4 種怪物 |
-| `npcs.json` | NPC 定義（對話、商店、服務類型） | 7 個 NPC |
-| `items.json` | 物品模板（屬性、修正、條件） | 15 種物品 |
-| `guilds.json` | 職業定義（屬性、技能、公式） | 5 種職業 |
+所有 JSON 資源檔的 ID 採用 **流水號前綴格式**：`{類別碼}_{序號}_{原始名稱}`（類別碼 2 位、序號 2 位）。
+
+| 檔案 | 類別碼 | 內容 | 資料量 |
+|------|:------:|------|--------|
+| `items.json` | `01_` | 物品模板（屬性、修正、條件） | 15 種物品 |
+| `monsters.json` | `02_` | 怪物定義（屬性、lootTableId、出沒場景） | 4 種怪物 |
+| `scenes.json` | `03_` | 場景定義（名稱、描述、出口、怪物、NPC） | 6 個場景 |
+| `npcs.json` | `04_` | NPC 定義（對話、商店、服務類型） | 7 個 NPC |
+| `guilds.json` | `05_` | 職業定義（屬性、技能、公式） | 5 種職業 |
+| `loot_tables.json` | `06_` | 掉落表定義（物品、機率、數量範圍） | 2 張掉落表 |
 
 ---
 
@@ -270,7 +284,7 @@ TextGame
 | `PlayerCharacterTests.swift` | 角色初始屬性、狀態值、職業對應、經驗值與升級 | 20 |
 | `SkillTests.swift` | 經驗吸收、升級、技能分類、顯示名稱 | 9 |
 | `GameItemTests.swift` | 使用條件、堆疊判斷、裝備部位 | 9 |
-| `TemplateLoaderTests.swift` | 5 個 Loader 載入驗證、資料查詢 | 12 |
+| `TemplateLoaderTests.swift` | 6 個 Loader 載入驗證、資料查詢 | 15 |
 | `NPCTemplateTests.swift` | 條件對話過濾、商人判定 | 6 |
 | `CombatTests.swift` | 戰鬥公式（命中/閃避/傷害 clamping）、CombatMonster 狀態、角色戰鬥屬性、武器技能映射 | 26 |
-| **合計** | | **83（不含 UI 測試）** |
+| **合計** | | **86（不含 UI 測試）** |

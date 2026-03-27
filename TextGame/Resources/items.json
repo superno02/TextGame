@@ -1,7 +1,7 @@
 {
     "items": [
         {
-            "id": "iron_sword",
+            "id": "01_01_iron_sword",
             "name": "鐵劍",
             "description": "一把普通的鐵製長劍，是新手冒險者的可靠夥伴。",
             "type": "weapon",
@@ -35,7 +35,7 @@
             }
         },
         {
-            "id": "wooden_staff",
+            "id": "01_02_wooden_staff",
             "name": "木杖",
             "description": "以堅硬木材削製而成的法杖，能增幅些許魔力。",
             "type": "weapon",
@@ -69,7 +69,7 @@
             }
         },
         {
-            "id": "short_bow",
+            "id": "01_03_short_bow",
             "name": "短弓",
             "description": "輕便的短弓，適合在林間狩獵使用。",
             "type": "weapon",
@@ -103,7 +103,7 @@
             }
         },
         {
-            "id": "rusty_dagger",
+            "id": "01_04_rusty_dagger",
             "name": "生鏽匕首",
             "description": "一把佈滿鏽斑的匕首，雖然老舊但仍能使用。",
             "type": "weapon",
@@ -137,7 +137,7 @@
             }
         },
         {
-            "id": "leather_armor",
+            "id": "01_05_leather_armor",
             "name": "皮甲",
             "description": "以獸皮鞣製而成的輕型護甲，提供基本的防護。",
             "type": "armor",
@@ -171,7 +171,7 @@
             }
         },
         {
-            "id": "iron_helm",
+            "id": "01_06_iron_helm",
             "name": "鐵盔",
             "description": "簡樸的鐵製頭盔，能保護頭部免受致命一擊。",
             "type": "armor",
@@ -205,7 +205,7 @@
             }
         },
         {
-            "id": "cloth_boots",
+            "id": "01_07_cloth_boots",
             "name": "布靴",
             "description": "柔軟的布製靴子，穿起來很舒適。",
             "type": "armor",
@@ -239,7 +239,7 @@
             }
         },
         {
-            "id": "wooden_shield",
+            "id": "01_08_wooden_shield",
             "name": "木盾",
             "description": "以厚實木板製成的盾牌，能擋住一些攻擊。",
             "type": "armor",
@@ -273,7 +273,7 @@
             }
         },
         {
-            "id": "small_healing_potion",
+            "id": "01_09_small_healing_potion",
             "name": "小型治療藥水",
             "description": "以草藥調配的藥水，能恢復少量生命值。",
             "type": "consumable",
@@ -307,7 +307,7 @@
             }
         },
         {
-            "id": "mana_potion",
+            "id": "01_10_mana_potion",
             "name": "魔力藥水",
             "description": "閃爍著藍色光芒的藥水，飲用後能恢復魔力。",
             "type": "consumable",
@@ -341,7 +341,7 @@
             }
         },
         {
-            "id": "stamina_herb",
+            "id": "01_11_stamina_herb",
             "name": "體力草",
             "description": "山間採集的野生藥草，咀嚼後能恢復體力。",
             "type": "consumable",
@@ -375,7 +375,7 @@
             }
         },
         {
-            "id": "warrior_greatsword",
+            "id": "01_12_warrior_greatsword",
             "name": "戰士巨劍",
             "description": "只有經驗豐富的戰士才能揮動的沉重巨劍。",
             "type": "weapon",
@@ -399,7 +399,7 @@
             },
             "requirements": {
                 "circle": 3,
-                "guilds": ["warrior"],
+                "guilds": ["05_02_warrior"],
                 "strength": 14,
                 "agility": 0,
                 "constitution": 10,
@@ -409,7 +409,7 @@
             }
         },
         {
-            "id": "mage_robe",
+            "id": "01_13_mage_robe",
             "name": "法師長袍",
             "description": "以魔法絲線織成的長袍，穿著時能感受到魔力的流動。",
             "type": "armor",
@@ -433,7 +433,7 @@
             },
             "requirements": {
                 "circle": 3,
-                "guilds": ["mage"],
+                "guilds": ["05_03_mage"],
                 "strength": 0,
                 "agility": 0,
                 "constitution": 0,
@@ -443,7 +443,7 @@
             }
         },
         {
-            "id": "rabbit_hide",
+            "id": "01_14_rabbit_hide",
             "name": "兔皮",
             "description": "從兔子身上取得的毛皮，可以用來製作皮革。",
             "type": "material",
@@ -477,7 +477,7 @@
             }
         },
         {
-            "id": "chicken_feather",
+            "id": "01_15_chicken_feather",
             "name": "雞毛",
             "description": "普通的雞毛，或許有什麼用途。",
             "type": "material",

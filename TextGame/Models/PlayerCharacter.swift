@@ -149,7 +149,7 @@ final class PlayerCharacter {
         self.guildRawValue = guild.rawValue
         self.circle = 1
         self.experience = 0
-        self.currentSceneId = "village"
+        self.currentSceneId = "03_01_village"
 
         // 從職業模板取得基礎屬性，找不到時使用 fallback 預設值
         let template = GuildTemplateLoader.shared.template(for: guild)

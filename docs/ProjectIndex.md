@@ -1,6 +1,6 @@
 # TextGame 專案索引
 
-> 最後更新：2026-03-25（經驗值系統、移除體力消耗）
+> 最後更新：2026-03-27（JSON ID 流水號前綴化）
 
 ## 文檔導覽
 
@@ -84,17 +84,30 @@
 | `Models/GameItem.swift` | 物品 Model，含類型、數值屬性、裝備功能與使用條件判斷 |
 | `Models/SaveSlot.swift` | 存檔槽位 Model，支援多存檔，關聯角色資料 |
 | `Models/SceneTemplate.swift` | 場景模板與 SceneTemplateLoader（Singleton） |
-| `Models/MonsterTemplate.swift` | 怪物模板與 MonsterTemplateLoader（Singleton） |
+| `Models/LootTableTemplate.swift` | 掉落表模板與 LootTableLoader（Singleton），定義掉落物品、機率與數量範圍 |
+| `Models/MonsterTemplate.swift` | 怪物模板與 MonsterTemplateLoader（Singleton），透過 lootTableId 引用掉落表 |
 | `Models/NPCTemplate.swift` | NPC 模板與 NPCTemplateLoader（Singleton），含條件對話過濾 |
 | `Models/ItemTemplate.swift` | 物品模板與 ItemTemplateLoader（Singleton） |
 | `Models/GuildTemplate.swift` | 職業模板與 GuildTemplateLoader（Singleton），含 StatusFormula、CircleGrowth |
 
 ### JSON 資源檔
 
+所有 JSON 資源檔的 ID 採用 **流水號前綴格式**：`{類別碼}_{序號}_{原始名稱}`
+
+| 類別碼 | 對應檔案 | 範例 |
+|:------:|----------|------|
+| `01_` | items.json | `01_01_iron_sword` |
+| `02_` | monsters.json | `02_01_rabbit` |
+| `03_` | scenes.json | `03_01_village` |
+| `04_` | npcs.json | `04_01_village_elder` |
+| `05_` | guilds.json | `05_01_none` |
+| `06_` | loot_tables.json | `06_01_loot_rabbit` |
+
 | 檔案 | 內容 | 資料量 |
 |------|------|--------|
 | `Resources/scenes.json` | 場景定義 | 6 個場景 |
-| `Resources/monsters.json` | 怪物定義 | 4 種怪物 |
+| `Resources/monsters.json` | 怪物定義（透過 lootTableId 引用掉落表） | 4 種怪物 |
+| `Resources/loot_tables.json` | 掉落表定義（物品、機率、數量範圍） | 2 張掉落表 |
 | `Resources/npcs.json` | NPC 定義 | 7 個 NPC |
 | `Resources/items.json` | 物品模板 | 15 種物品 |
 | `Resources/guilds.json` | 職業定義 | 5 種職業 |
@@ -106,7 +119,7 @@
 | `PlayerCharacterTests.swift` | 初始屬性、狀態值、職業對應、經驗值與升級 | 20 |
 | `SkillTests.swift` | 經驗吸收、升級、分類、公式 | 9 |
 | `GameItemTests.swift` | 使用條件、堆疊、裝備 | 9 |
-| `TemplateLoaderTests.swift` | 5 個 Loader 載入驗證 | 12 |
+| `TemplateLoaderTests.swift` | 6 個 Loader 載入驗證 | 15 |
 | `NPCTemplateTests.swift` | 條件對話、商人判定 | 6 |
 | `CombatTests.swift` | 戰鬥公式、命中/閃避/傷害計算、CombatMonster、武器技能映射 | 26 |
 
@@ -137,7 +150,7 @@
 - [x] SkillView 完整實作（按戰鬥/生存/知識/魔法分類，顯示等級與進度條）
 - [x] InventoryView 完整實作（7 個裝備部位 + 背包物品列表）
 - [x] StatusView 完整實作（基本資訊、六大屬性、三大狀態值）
-- [x] 5 個 TemplateLoader 新增 loadError 追蹤，GameEngine 啟動時統一檢查
+- [x] 6 個 TemplateLoader 新增 loadError 追蹤，GameEngine 啟動時統一檢查
 - [x] NPC 談話功能（條件式對話過濾）
 - [x] 單元測試 57 個（Swift Testing 框架）
 - [x] 技術文件 7 份（docs/ 資料夾）
@@ -154,6 +167,12 @@
 - [x] GameView 升級訊息金色高亮
 - [x] 移除戰鬥體力消耗限制（移除每攻擊 -5 SP、體力不足自動逃跑）
 - [x] 經驗值系統單元測試 7 個（PlayerCharacterTests.swift）
+- [x] 掉落表系統獨立化（loot_tables.json + LootTableLoader，怪物透過 lootTableId 引用掉落表）
+- [x] 掉落物支援數量範圍（minQuantity~maxQuantity）
+- [x] 掉落表系統單元測試 3 個（TemplateLoaderTests.swift）
+- [x] JSON ID 流水號前綴化（所有資源檔 ID 格式統一為 `{類別碼}_{序號}_{原始名稱}`）
+- [x] Guild enum rawValue 同步更新（如 `warrior` → `05_02_warrior`）
+- [x] 所有 Swift 原始碼與測試檔中的硬編碼 ID 同步更新
 
 ### 待開發
 - [ ] 物品裝備/使用互動（背包內操作）

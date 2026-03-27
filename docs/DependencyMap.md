@@ -1,6 +1,6 @@
 # DependencyMap.md — 依賴關係圖
 
-> 最後更新：2026-03-25（經驗值系統、移除體力消耗）
+> 最後更新：2026-03-27（JSON ID 流水號前綴化）
 
 ---
 
@@ -41,10 +41,11 @@ GameEngine（@Observable）
   ├── SceneTemplateLoader.shared
   ├── MonsterTemplateLoader.shared
   ├── NPCTemplateLoader.shared
-  ├── ItemTemplateLoader.shared（戰鬥掉落物）
+  ├── ItemTemplateLoader.shared（掉落物品模板查詢）
+  ├── LootTableLoader.shared（掉落表查詢）
   ├── CombatMonster（戰鬥運行時狀態）
   ├── CombatCalculator（戰鬥公式計算）
-  └── loadError 檢查 → 5 個 Loader
+  └── loadError 檢查 → 6 個 Loader
 
 SkillView
   └── PlayerCharacter.skills → [Skill]
@@ -91,7 +92,12 @@ SceneTemplateLoader.shared
 
 MonsterTemplateLoader.shared
   ├── monsters.json（Bundle 資源）
-  ├── MonsterTemplate → MonsterLoot
+  ├── MonsterTemplate → lootTableId: String?（引用掉落表）
+  └── loadError: String?
+
+LootTableLoader.shared
+  ├── loot_tables.json（Bundle 資源）
+  ├── LootTableTemplate → [LootEntry]（itemId / dropRate / minQuantity / maxQuantity）
   └── loadError: String?
 
 NPCTemplateLoader.shared
@@ -141,7 +147,8 @@ GameEngine
   → CombatCalculator.*（戰鬥公式計算）
   → PlayerCharacter.gainExperience()（經驗值授予、升級判定）
   → GuildTemplateLoader.shared.template(for:).circleGrowth（升級屬性成長）
-  → ItemTemplateLoader.shared.template(for:)（掉落物查詢）
+  → LootTableLoader.shared.template(for:)（掉落表查詢）
+  → ItemTemplateLoader.shared.template(for:)（掉落物品模板查詢）
   → PlayerCharacter.skill(for:)（技能查詢）
   → Skill.gainFieldExperience() / absorbExperience()（技能經驗）
   → SaveSlot.updateSaveInfo()（存檔）
@@ -237,7 +244,8 @@ GameView → GameEngine → MonsterTemplateLoader → MonsterTemplate
                       → PlayerCharacter.skill(for:) → Skill.gainFieldExperience()
                       → PlayerCharacter.gainExperience() → performLevelUp()
                       → GuildTemplateLoader（CircleGrowth + StatusFormula）
-                      → ItemTemplateLoader（掉落物生成）
+                      → LootTableLoader（monster.lootTableId → 掉落表查詢）
+                      → ItemTemplateLoader（掉落物品模板查詢）
                       → GameItem(from: ItemTemplate)（加入背包）
 ```
 

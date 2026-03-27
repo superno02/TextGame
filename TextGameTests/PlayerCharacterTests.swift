@@ -58,7 +58,7 @@ struct PlayerCharacterTests {
     @Test("角色初始位置應為 village")
     func initialScene() {
         let character = PlayerCharacter(name: "測試", guild: .none)
-        #expect(character.currentSceneId == "village")
+        #expect(character.currentSceneId == "03_01_village")
     }
 
     @Test("當前生命值應等於最大生命值")
@@ -86,7 +86,7 @@ struct PlayerCharacterTests {
     func guildComputedProperty() {
         let character = PlayerCharacter(name: "測試", guild: .warrior)
         #expect(character.guild == .warrior)
-        #expect(character.guildRawValue == "warrior")
+        #expect(character.guildRawValue == "05_02_warrior")
     }
 
     @Test("初始技能列表應為空")

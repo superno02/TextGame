@@ -2,7 +2,7 @@
 
 本文件詳細說明 TextGame 中角色與怪物的戰鬥相關數值設計，包含屬性計算公式、物品數值結構、怪物數值分佈、技能經驗系統，以及角色經驗值與等階升級。
 
-> 最後更新：2026-03-25（經驗值系統、移除體力消耗）
+> 最後更新：2026-03-27（JSON ID 流水號前綴化）
 
 ---
 
@@ -104,12 +104,14 @@
 
 ### 怪物掉落物
 
-| 怪物 | 掉落物品 | 掉落機率 |
-|------|----------|:--------:|
-| 兔子 | 兔皮（`rabbit_hide`） | 50% |
-| 雞 | 雞毛（`chicken_feather`） | 60% |
-| 野豬 | — | — |
-| 灰狼 | — | — |
+怪物透過 `lootTableId` 引用獨立的掉落表（`loot_tables.json`），掉落表定義掉落物品、機率與數量範圍。
+
+| 怪物 | 掉落表 ID | 掉落物品 | 掉落機率 | 數量範圍 |
+|------|-----------|----------|:--------:|:--------:|
+| 兔子 | `06_01_loot_rabbit` | 兔皮（`01_14_rabbit_hide`） | 50% | 1~2 |
+| 雞 | `06_02_loot_chicken` | 雞毛（`01_15_chicken_feather`） | 60% | 1~3 |
+| 野豬 | — | — | — | — |
+| 灰狼 | — | — | — | — |
 
 ### 數值設計分析
 
@@ -355,11 +357,11 @@ func canBeUsedBy(_ character: PlayerCharacter) -> Bool
 
 | 物品 ID | 武器名稱 | 對應技能 |
 |---------|----------|----------|
-| `iron_sword` | 鐵劍 | 劍術 |
-| `warrior_greatsword` | 戰士巨劍 | 劍術 |
-| `short_bow` | 短弓 | 弓術 |
-| `wooden_staff` | 木杖 | 杖術 |
-| `rusty_dagger` | 生鏽匕首 | 匕首 |
+| `01_01_iron_sword` | 鐵劍 | 劍術 |
+| `01_12_warrior_greatsword` | 戰士巨劍 | 劍術 |
+| `01_03_short_bow` | 短弓 | 弓術 |
+| `01_02_wooden_staff` | 木杖 | 杖術 |
+| `01_04_rusty_dagger` | 生鏽匕首 | 匕首 |
 | 其他 / 空手 | — | 無（不觸發武器技能經驗） |
 
 ### 防具 → 技能類型推斷
@@ -380,15 +382,17 @@ func canBeUsedBy(_ character: PlayerCharacter) -> Bool
 
 ### 掉落物處理
 
-怪物死亡後遍歷 `MonsterTemplate.loot`：
-1. 對每個 `MonsterLoot` 擲骰判定 `dropRate`
-2. 成功 → 從 `ItemTemplateLoader` 查詢物品模板
-3. 若背包已有相同物品且可堆疊且未滿 → `stackCount += 1`
-4. 否則建立新 `GameItem(from: template)` 加入背包
+怪物死亡後透過 `lootTableId` 查詢掉落表（`LootTableLoader`）：
+1. 若 `lootTableId` 為 `nil` 或查無掉落表 → 不處理
+2. 遍歷掉落表的 `entries`，對每個 `LootEntry` 擲骰判定 `dropRate`
+3. 成功 → 隨機決定數量（`minQuantity`~`maxQuantity`）
+4. 從 `ItemTemplateLoader` 查詢物品模板
+5. 逐一加入背包：若背包已有相同物品且可堆疊且未滿 → `stackCount += 1`，否則建立新 `GameItem(from: template)`
+6. 顯示掉落訊息（數量 > 1 時顯示 x 數量）
 
 ### 死亡處理
 
-- 傳送至村莊（`village`，安全區）
+- 傳送至村莊（`03_01_village`，安全區）
 - 恢復一半 HP（`maxHealth / 2`，最低 1）
 - 恢復一半 SP（`maxStamina / 2`，最低 1）
 - **不掉落物品、不損失經驗**

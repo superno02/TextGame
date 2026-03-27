@@ -132,7 +132,7 @@ final class GuildTemplateLoader {
 
     /// 取得可選擇的職業列表（排除 none）
     func selectableGuilds() -> [GuildTemplate] {
-        allTemplates().filter { $0.id != "none" }
+        allTemplates().filter { $0.id != "05_01_none" }
     }
 
     /// 重新載入
