@@ -28,6 +28,60 @@
                 { "itemId": "01_16_gold_coin", "dropRate": 0.9, "minQuantity": 10, "maxQuantity": 25 },
                 { "itemId": "01_09_small_healing_potion", "dropRate": 0.3, "minQuantity": 1, "maxQuantity": 1 }
             ]
+        },
+        {
+            "id": "06_05_loot_poison_frog",
+            "name": "毒蛙掉落表",
+            "entries": [
+                { "itemId": "01_24_frog_gland", "dropRate": 0.5, "minQuantity": 1, "maxQuantity": 2 }
+            ]
+        },
+        {
+            "id": "06_06_loot_swamp_lizard",
+            "name": "沼澤蜥蜴掉落表",
+            "entries": [
+                { "itemId": "01_25_lizard_scale", "dropRate": 0.4, "minQuantity": 1, "maxQuantity": 2 },
+                { "itemId": "01_16_gold_coin", "dropRate": 0.7, "minQuantity": 5, "maxQuantity": 12 }
+            ]
+        },
+        {
+            "id": "06_07_loot_swamp_serpent",
+            "name": "沼澤巨蟒掉落表",
+            "entries": [
+                { "itemId": "01_26_snake_skin", "dropRate": 0.45, "minQuantity": 1, "maxQuantity": 1 }
+            ]
+        },
+        {
+            "id": "06_08_loot_mine_bat",
+            "name": "礦坑蝙蝠掉落表",
+            "entries": [
+                { "itemId": "01_27_bat_wing", "dropRate": 0.55, "minQuantity": 1, "maxQuantity": 2 }
+            ]
+        },
+        {
+            "id": "06_09_loot_skeleton",
+            "name": "骷髏戰士掉落表",
+            "entries": [
+                { "itemId": "01_16_gold_coin", "dropRate": 0.85, "minQuantity": 8, "maxQuantity": 18 },
+                { "itemId": "01_28_bone_fragment", "dropRate": 0.5, "minQuantity": 1, "maxQuantity": 3 }
+            ]
+        },
+        {
+            "id": "06_10_loot_shadow_assassin",
+            "name": "暗影刺客掉落表",
+            "entries": [
+                { "itemId": "01_16_gold_coin", "dropRate": 0.9, "minQuantity": 15, "maxQuantity": 30 },
+                { "itemId": "01_29_shadow_shard", "dropRate": 0.35, "minQuantity": 1, "maxQuantity": 1 }
+            ]
+        },
+        {
+            "id": "06_11_loot_stone_guardian",
+            "name": "石像守衛掉落表",
+            "entries": [
+                { "itemId": "01_16_gold_coin", "dropRate": 0.95, "minQuantity": 20, "maxQuantity": 50 },
+                { "itemId": "01_30_ancient_core", "dropRate": 0.25, "minQuantity": 1, "maxQuantity": 1 },
+                { "itemId": "01_22_medium_healing_potion", "dropRate": 0.4, "minQuantity": 1, "maxQuantity": 2 }
+            ]
         }
     ]
 }

@@ -84,8 +84,10 @@ enum SkillType: String, Codable, CaseIterable {
             return .bow
         case "01_02_wooden_staff":
             return .staff
-        case "01_04_rusty_dagger":
+        case "01_04_rusty_dagger", "01_18_shadow_blade":
             return .dagger
+        case "01_17_long_spear":
+            return .sword
         default:
             return nil
         }

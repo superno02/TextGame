@@ -64,10 +64,70 @@
             "name": "林間小路",
             "description": "一條蜿蜒穿過樹林的小路，兩旁的灌木叢中偶爾傳出窸窣聲。陽光從樹葉的縫隙間灑落。",
             "exits": [
-                { "label": "回到村口", "destinationId": "03_03_village_gate" }
+                { "label": "回到村口", "destinationId": "03_03_village_gate" },
+                { "label": "前往河邊渡口", "destinationId": "03_07_river_crossing" }
             ],
             "monsters": ["02_01_rabbit", "02_03_wild_boar", "02_05_goblin"],
             "npcs": [],
+            "isRestArea": false
+        },
+        {
+            "id": "03_07_river_crossing",
+            "name": "河邊渡口",
+            "description": "一條寬闊的河流橫亙眼前，渾濁的河水奔流不息。岸邊停著一艘破舊的渡船，一個老漁夫正在修補漁網。遠處的河谷隱約可見營帳的輪廓。",
+            "exits": [
+                { "label": "回到林間小路", "destinationId": "03_06_forest_path" },
+                { "label": "前往河谷營地", "destinationId": "03_08_valley_camp" },
+                { "label": "前往沼澤地帶", "destinationId": "03_09_swamp" }
+            ],
+            "monsters": [],
+            "npcs": ["04_08_ferryman"],
+            "isRestArea": true
+        },
+        {
+            "id": "03_08_valley_camp",
+            "name": "河谷營地",
+            "description": "河谷中的一處臨時營地，幾頂帳篷圍成一圈，中央燃著篝火。一群傭兵正在此處休整，空氣中飄散著烤肉和鐵鏽的氣味。",
+            "exits": [
+                { "label": "回到河邊渡口", "destinationId": "03_07_river_crossing" },
+                { "label": "前往荒廢礦坑", "destinationId": "03_10_abandoned_mine" }
+            ],
+            "monsters": [],
+            "npcs": ["04_09_mercenary_captain"],
+            "isRestArea": true
+        },
+        {
+            "id": "03_09_swamp",
+            "name": "沼澤地帶",
+            "description": "腳下的泥土變得鬆軟潮濕，空氣中瀰漫著腐爛植物的酸臭味。枯死的樹木從渾濁的沼水中探出，偶爾傳來不明生物的低鳴聲。",
+            "exits": [
+                { "label": "回到河邊渡口", "destinationId": "03_07_river_crossing" },
+                { "label": "深入古代廢墟", "destinationId": "03_11_ancient_ruins" }
+            ],
+            "monsters": ["02_07_poison_frog", "02_08_swamp_lizard", "02_09_swamp_serpent"],
+            "npcs": [],
+            "isRestArea": false
+        },
+        {
+            "id": "03_10_abandoned_mine",
+            "name": "荒廢礦坑",
+            "description": "昏暗的礦坑入口散發著陰冷的氣息，殘破的支撐木架搖搖欲墜。礦道深處傳來金屬碰撞的回音，不知是風聲還是什麼東西在移動。",
+            "exits": [
+                { "label": "回到河谷營地", "destinationId": "03_08_valley_camp" }
+            ],
+            "monsters": ["02_10_mine_bat", "02_11_skeleton_warrior"],
+            "npcs": [],
+            "isRestArea": false
+        },
+        {
+            "id": "03_11_ancient_ruins",
+            "name": "古代廢墟",
+            "description": "殘破的石柱矗立在迷霧之中，地面上刻滿了無法辨認的古代符文。這裡曾經是一座宏偉的神殿，如今只剩下斷壁殘垣。陰影在廢墟間遊蕩，令人不寒而慄。",
+            "exits": [
+                { "label": "回到沼澤地帶", "destinationId": "03_09_swamp" }
+            ],
+            "monsters": ["02_12_shadow_assassin", "02_13_stone_guardian"],
+            "npcs": ["04_10_ruin_watcher"],
             "isRestArea": false
         }
     ]

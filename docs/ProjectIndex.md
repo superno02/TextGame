@@ -1,6 +1,6 @@
 # TextGame 專案索引
 
-> 最後更新：2026-03-27（新增物品交易系統）
+> 最後更新：2026-03-27（世界內容擴充：河谷→沼澤→廢墟區域）
 
 ## 文檔導覽
 
@@ -106,11 +106,11 @@
 
 | 檔案 | 內容 | 資料量 |
 |------|------|--------|
-| `Resources/scenes.json` | 場景定義 | 6 個場景 |
-| `Resources/monsters.json` | 怪物定義（透過 lootTableId 引用掉落表） | 6 種怪物 |
-| `Resources/loot_tables.json` | 掉落表定義（物品、機率、數量範圍） | 4 張掉落表 |
-| `Resources/npcs.json` | NPC 定義 | 7 個 NPC |
-| `Resources/items.json` | 物品模板 | 16 種物品 |
+| `Resources/scenes.json` | 場景定義 | 11 個場景 |
+| `Resources/monsters.json` | 怪物定義（透過 lootTableId 引用掉落表） | 13 種怪物 |
+| `Resources/loot_tables.json` | 掉落表定義（物品、機率、數量範圍） | 11 張掉落表 |
+| `Resources/npcs.json` | NPC 定義 | 10 個 NPC |
+| `Resources/items.json` | 物品模板 | 30 種物品 |
 | `Resources/guilds.json` | 職業定義 | 5 種職業 |
 
 ### 測試檔案
@@ -187,6 +187,13 @@
 - [x] 新增人形怪物（哥布林、山賊）與對應掉落表
 - [x] StatusView 顯示金幣
 - [x] 交易系統單元測試 11 個（TradeTests.swift）
+- [x] 世界內容擴充：河谷→沼澤→廢墟區域（5 場景、7 怪物、14 物品、7 掉落表、3 NPC）
+- [x] 新增進階裝備（長矛、暗影之刃、鎖子甲、皮手套、鐵脛甲）填補手部/腿部空缺
+- [x] 新增消耗品（中型治療藥水、解毒劑）
+- [x] 新增怪物等級 3~8（毒蛙、沼澤蜥蜴、沼澤巨蟒、礦坑蝙蝠、骷髏戰士、暗影刺客、石像守衛）
+- [x] 新增進階商人 NPC（傭兵隊長、廢墟守望者）與情報 NPC（渡船夫）
+- [x] 盜賊專用★★★武器（暗影之刃）
+- [x] weaponSkillType 新增長矛→劍術、暗影之刃→匕首映射
 
 ### 待開發
 - [ ] 物品裝備/使用互動（背包內操作）

@@ -169,6 +169,96 @@
                 { "itemId": "01_02_wooden_staff", "stock": 1, "priceMultiplier": 0.7 }
             ],
             "services": ["train", "buy"]
+        },
+        {
+            "id": "04_08_ferryman",
+            "name": "渡船夫老吳",
+            "title": "渡船夫",
+            "description": "一個皮膚黝黑、滿臉風霜的老漁夫，粗糙的雙手正熟練地修補漁網。他對這一帶的水路瞭若指掌。",
+            "icon": "ferry.fill",
+            "type": "info",
+            "dialogues": [
+                {
+                    "id": "greeting",
+                    "text": "嘿，外地人！過河要小心，最近河對岸不太平靜。",
+                    "condition": null
+                },
+                {
+                    "id": "swamp_warning",
+                    "text": "沼澤那邊可別亂闖，毒蛙和蜥蜴到處都是。更深處還有巨蟒出沒，沒有點本事的話還是回頭吧。",
+                    "condition": null
+                },
+                {
+                    "id": "ruins_rumor",
+                    "text": "聽說沼澤盡頭有座古代廢墟，裡面的石像會動！你信嗎？反正我是不敢去。",
+                    "condition": null
+                }
+            ],
+            "shopItems": [],
+            "services": ["info"]
+        },
+        {
+            "id": "04_09_mercenary_captain",
+            "name": "傭兵隊長",
+            "title": "傭兵隊長",
+            "description": "一個身形魁梧的女戰士，臉上有一道觸目驚心的刀疤。她的眼神銳利，渾身散發著百戰老兵的氣場。",
+            "icon": "shield.lefthalf.filled",
+            "type": "merchant",
+            "dialogues": [
+                {
+                    "id": "greeting",
+                    "text": "想活命的話，裝備不能馬虎。看看我這裡的貨，都是實戰中用得上的好東西。",
+                    "condition": null
+                },
+                {
+                    "id": "warrior_greeting",
+                    "text": "喔？同行啊。戰士之間不用多說廢話，挑你需要的吧。",
+                    "condition": "guild:05_02_warrior"
+                },
+                {
+                    "id": "mine_warning",
+                    "text": "礦坑裡的骷髏戰士不是鬧著玩的，進去之前確保你的裝備夠硬。",
+                    "condition": null
+                }
+            ],
+            "shopItems": [
+                { "itemId": "01_17_long_spear", "stock": 2, "priceMultiplier": 1.0 },
+                { "itemId": "01_19_chain_mail", "stock": 2, "priceMultiplier": 1.0 },
+                { "itemId": "01_20_leather_gloves", "stock": 5, "priceMultiplier": 1.0 },
+                { "itemId": "01_21_iron_greaves", "stock": 3, "priceMultiplier": 1.0 },
+                { "itemId": "01_22_medium_healing_potion", "stock": -1, "priceMultiplier": 1.0 }
+            ],
+            "services": ["buy", "sell"]
+        },
+        {
+            "id": "04_10_ruin_watcher",
+            "name": "廢墟守望者",
+            "title": "神秘守望者",
+            "description": "一個身披暗色斗篷的神秘人物，面容隱藏在兜帽的陰影中。他靜靜地佇立在廢墟入口，彷彿已經等待了很長的時間。",
+            "icon": "eye.fill",
+            "type": "merchant",
+            "dialogues": [
+                {
+                    "id": "greeting",
+                    "text": "……你能走到這裡，說明你有一定的實力。我這裡有些東西，也許對你有用。",
+                    "condition": null
+                },
+                {
+                    "id": "thief_greeting",
+                    "text": "盜賊嗎……這把暗影之刃，是用這廢墟中的暗影碎片鍛造的。只有像你這樣的人才配使用它。",
+                    "condition": "guild:05_04_thief"
+                },
+                {
+                    "id": "lore",
+                    "text": "這座廢墟曾是古代法師的神殿。那些石像守衛，至今仍在執行千年前的命令……",
+                    "condition": null
+                }
+            ],
+            "shopItems": [
+                { "itemId": "01_18_shadow_blade", "stock": 1, "priceMultiplier": 1.5 },
+                { "itemId": "01_23_antidote", "stock": -1, "priceMultiplier": 1.0 }
+            ],
+            "services": ["buy"]
         }
     ]
 }

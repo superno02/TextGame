@@ -1,6 +1,6 @@
 # Modules.md — 功能模組分析
 
-> 最後更新：2026-03-27（新增物品交易系統）
+> 最後更新：2026-03-27（世界內容擴充：河谷→沼澤→廢墟區域）
 
 ---
 
@@ -216,7 +216,7 @@ TextGame
 | **功能說明** | 場景定義與載入 |
 | **主要檔案** | `Models/SceneTemplate.swift`、`Models/GameScene.swift` |
 | **責任** | 從 `scenes.json` 載入場景資料；提供場景查詢、NPC 查詢；轉換為運行時 `GameScene` |
-| **JSON 資料** | 6 個場景：村莊、市集、村口、後山、深山、林間小路 |
+| **JSON 資料** | 11 個場景：村莊、市集、村口、後山、深山、林間小路、河邊渡口、河谷營地、沼澤地帶、荒廢礦坑、古代廢墟 |
 
 ### 5.2 MonsterTemplate / MonsterTemplateLoader
 
@@ -225,7 +225,7 @@ TextGame
 | **功能說明** | 怪物定義與載入 |
 | **主要檔案** | `Models/MonsterTemplate.swift` |
 | **責任** | 從 `monsters.json` 載入怪物資料；支援按場景/等級篩選；透過 `lootTableId` 引用掉落表 |
-| **JSON 資料** | 6 種怪物：兔子、雞、野豬、灰狼、哥布林、山賊 |
+| **JSON 資料** | 13 種怪物：兔子、雞、哥布林、毒蛙、野豬、礦坑蝙蝠、灰狼、山賊、沼澤蜥蜴、沼澤巨蟒、骷髏戰士、暗影刺客、石像守衛 |
 
 ### 5.3 NPCTemplate / NPCTemplateLoader
 
@@ -234,7 +234,7 @@ TextGame
 | **功能說明** | NPC 定義與載入 |
 | **主要檔案** | `Models/NPCTemplate.swift` |
 | **責任** | 從 `npcs.json` 載入 NPC 資料；支援條件式對話過濾、商人篩選 |
-| **JSON 資料** | 7 個 NPC：村長老伯、旅行商人、鐵匠老張、藥婆、皮匠阿福、守衛阿強、隱居老者 |
+| **JSON 資料** | 10 個 NPC：村長老伯、旅行商人、鐵匠老張、藥婆、皮匠阿福、守衛阿強、隱居老者、渡船夫老吳、傭兵隊長、廢墟守望者 |
 
 ### 5.4 ItemTemplate / ItemTemplateLoader
 
@@ -243,7 +243,7 @@ TextGame
 | **功能說明** | 物品模板定義與載入 |
 | **主要檔案** | `Models/ItemTemplate.swift` |
 | **責任** | 從 `items.json` 載入物品模板；作為建立 `GameItem` 實例的藍圖 |
-| **JSON 資料** | 16 種物品：武器（4）、防具（5）、消耗品（3）、素材（2）、雜物（1）、職業專用（1） |
+| **JSON 資料** | 30 種物品：武器（6）、防具（8）、消耗品（5）、素材（9）、雜物（1）、職業專用（1） |
 
 ### 5.5 GuildTemplate / GuildTemplateLoader
 
@@ -263,7 +263,7 @@ TextGame
 | **主要檔案** | `Models/LootTableTemplate.swift` |
 | **責任** | 從 `loot_tables.json` 載入掉落表資料；定義每個掉落項目的物品 ID、掉落機率與數量範圍（minQuantity~maxQuantity） |
 | **資料結構** | `LootTableTemplate` → `LootEntry`（itemId、dropRate、minQuantity、maxQuantity） |
-| **JSON 資料** | 4 張掉落表：兔子掉落表、雞掉落表、哥布林掉落表（金幣）、山賊掉落表（金幣+藥水） |
+| **JSON 資料** | 11 張掉落表：兔子、雞、哥布林、山賊、毒蛙、沼澤蜥蜴、沼澤巨蟒、礦坑蝙蝠、骷髏戰士、暗影刺客、石像守衛 |
 | **與其他模組的關係** | 被 `GameEngine.processLoot()` 查詢使用；`MonsterTemplate.lootTableId` 引用掉落表 ID |
 
 ---
@@ -276,7 +276,7 @@ TextGame
 | **主要檔案** | `Models/Enums.swift`、`Models/GameItem.swift`（`ItemType`） |
 | **包含列舉** | `Guild`（5 種職業）、`SkillCategory`（5 大分類）、`SkillType`（21 種技能）、`EquipmentSlot`（7 個部位）、`ItemType`（6 種物品類型） |
 | **特色** | 所有列舉均提供中文 `displayName` 計算屬性 |
-| **戰鬥相關** | `SkillType.weaponSkillType(for: String) -> SkillType?` — 將武器物品 ID（含流水號前綴，如 `01_01_iron_sword`）映射到對應的武器技能類型 |
+| **戰鬥相關** | `SkillType.weaponSkillType(for: String) -> SkillType?` — 將武器物品 ID（含流水號前綴，如 `01_01_iron_sword`）映射到對應的武器技能類型（7 種武器映射） |
 
 ---
 
@@ -286,12 +286,12 @@ TextGame
 
 | 檔案 | 類別碼 | 內容 | 資料量 |
 |------|:------:|------|--------|
-| `items.json` | `01_` | 物品模板（屬性、修正、條件） | 16 種物品 |
-| `monsters.json` | `02_` | 怪物定義（屬性、lootTableId、出沒場景） | 6 種怪物 |
-| `scenes.json` | `03_` | 場景定義（名稱、描述、出口、怪物、NPC） | 6 個場景 |
-| `npcs.json` | `04_` | NPC 定義（對話、商店、服務類型） | 7 個 NPC |
+| `items.json` | `01_` | 物品模板（屬性、修正、條件） | 30 種物品 |
+| `monsters.json` | `02_` | 怪物定義（屬性、lootTableId、出沒場景） | 13 種怪物 |
+| `scenes.json` | `03_` | 場景定義（名稱、描述、出口、怪物、NPC） | 11 個場景 |
+| `npcs.json` | `04_` | NPC 定義（對話、商店、服務類型） | 10 個 NPC |
 | `guilds.json` | `05_` | 職業定義（屬性、技能、公式） | 5 種職業 |
-| `loot_tables.json` | `06_` | 掉落表定義（物品、機率、數量範圍） | 4 張掉落表 |
+| `loot_tables.json` | `06_` | 掉落表定義（物品、機率、數量範圍） | 11 張掉落表 |
 
 ---
 

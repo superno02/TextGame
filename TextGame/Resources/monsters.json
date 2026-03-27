@@ -77,6 +77,97 @@
             "experience": 25,
             "lootTableId": "06_04_loot_bandit",
             "spawnScenes": ["03_05_deep_mountain"]
+        },
+        {
+            "id": "02_07_poison_frog",
+            "name": "毒蛙",
+            "description": "一隻背部佈滿鮮豔斑點的巨大蛙類，牠的皮膚上不斷滲出黏稠的毒液。看似遲鈍，實則出舌如電。",
+            "icon": "ant.fill",
+            "level": 3,
+            "health": 20,
+            "attack": 6,
+            "defense": 2,
+            "experience": 12,
+            "lootTableId": "06_05_loot_poison_frog",
+            "spawnScenes": ["03_09_swamp"]
+        },
+        {
+            "id": "02_08_swamp_lizard",
+            "name": "沼澤蜥蜴",
+            "description": "一隻體長超過一丈的巨型蜥蜴，全身覆蓋著堅硬的暗綠色鱗片。牠正半潛在泥水中，只露出一雙冰冷的眼睛。",
+            "icon": "lizard.fill",
+            "level": 5,
+            "health": 50,
+            "attack": 11,
+            "defense": 6,
+            "experience": 22,
+            "lootTableId": "06_06_loot_swamp_lizard",
+            "spawnScenes": ["03_09_swamp"]
+        },
+        {
+            "id": "02_09_swamp_serpent",
+            "name": "沼澤巨蟒",
+            "description": "一條粗如水桶的巨蟒盤踞在枯樹上，牠的身軀在陰暗中緩緩蠕動。被牠纏上的獵物絕無生還的可能。",
+            "icon": "circle.dotted",
+            "level": 6,
+            "health": 70,
+            "attack": 14,
+            "defense": 5,
+            "experience": 30,
+            "lootTableId": "06_07_loot_swamp_serpent",
+            "spawnScenes": ["03_09_swamp"]
+        },
+        {
+            "id": "02_10_mine_bat",
+            "name": "礦坑蝙蝠",
+            "description": "一隻翼展驚人的巨型蝙蝠，在礦坑的黑暗中無聲地飛掠。牠的利爪在石壁上留下深深的抓痕。",
+            "icon": "moon.fill",
+            "level": 4,
+            "health": 30,
+            "attack": 7,
+            "defense": 2,
+            "experience": 14,
+            "lootTableId": "06_08_loot_mine_bat",
+            "spawnScenes": ["03_10_abandoned_mine"]
+        },
+        {
+            "id": "02_11_skeleton_warrior",
+            "name": "骷髏戰士",
+            "description": "一具被黑暗力量驅動的骷髏，手持生鏽的長劍和破碎的盾牌。牠空洞的眼眶中閃爍著詭異的磷火。",
+            "icon": "figure.fencing",
+            "level": 7,
+            "health": 80,
+            "attack": 16,
+            "defense": 8,
+            "experience": 35,
+            "lootTableId": "06_09_loot_skeleton",
+            "spawnScenes": ["03_10_abandoned_mine"]
+        },
+        {
+            "id": "02_12_shadow_assassin",
+            "name": "暗影刺客",
+            "description": "一個由純粹黑暗凝聚而成的人形，牠的身影在廢墟的陰影中若隱若現。出手迅如閃電，殺意凜然。",
+            "icon": "figure.martial.arts",
+            "level": 7,
+            "health": 60,
+            "attack": 20,
+            "defense": 4,
+            "experience": 40,
+            "lootTableId": "06_10_loot_shadow_assassin",
+            "spawnScenes": ["03_11_ancient_ruins"]
+        },
+        {
+            "id": "02_13_stone_guardian",
+            "name": "石像守衛",
+            "description": "一尊高達兩丈的石像緩緩轉動了頭顱，古代符文在牠的身軀上閃爍著微光。牠是這座廢墟最後的守護者，任何入侵者都將被碾碎。",
+            "icon": "shield.checkered",
+            "level": 8,
+            "health": 120,
+            "attack": 18,
+            "defense": 12,
+            "experience": 50,
+            "lootTableId": "06_11_loot_stone_guardian",
+            "spawnScenes": ["03_11_ancient_ruins"]
         }
     ]
 }
