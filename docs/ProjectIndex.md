@@ -1,6 +1,6 @@
 # TextGame 專案索引
 
-> 最後更新：2026-03-27（JSON ID 流水號前綴化）
+> 最後更新：2026-03-27（新增手動存檔按鈕）
 
 ## 文檔導覽
 
@@ -72,8 +72,8 @@
 |------|------|
 | `TextGameApp.swift` | App 進入點，啟動時顯示 StartView，設定 SwiftData ModelContainer |
 | `Engine/GameEngine.swift` | 遊戲引擎（@Observable），管理訊息、場景、攻擊、對話、存檔等邏輯 |
-| `Views/StartView.swift` | 遊戲開始頁面，提供「開始遊戲」與「讀取存檔」選項 |
-| `Views/GameView.swift` | 遊戲主畫面（純 UI 層），初始化 Engine 並轉發操作 |
+| `Views/StartView.swift` | 遊戲開始頁面，提供「開始遊戲」與「讀取存檔」選項，支援左滑刪除存檔 |
+| `Views/GameView.swift` | 遊戲主畫面（純 UI 層），初始化 Engine 並轉發操作，含手動存檔按鈕 |
 | `Views/SkillView.swift` | 技能頁面，按 4 大分類顯示角色技能與熟練度進度條 |
 | `Views/InventoryView.swift` | 背包頁面，顯示 7 個裝備部位與背包物品列表 |
 | `Views/StatusView.swift` | 屬性頁面，顯示角色基本資訊、六大屬性與三大狀態值 |
@@ -173,11 +173,12 @@
 - [x] JSON ID 流水號前綴化（所有資源檔 ID 格式統一為 `{類別碼}_{序號}_{原始名稱}`）
 - [x] Guild enum rawValue 同步更新（如 `warrior` → `05_02_warrior`）
 - [x] 所有 Swift 原始碼與測試檔中的硬編碼 ID 同步更新
+- [x] 存檔刪除功能（讀取存檔彈窗中左滑刪除，含二次確認，cascade 刪除角色資料）
+- [x] GameView 手動存檔按鈕（toolbar 右上角，點擊觸發 saveGame() 並顯示「存檔完成。」訊息）
 
 ### 待開發
 - [ ] 物品裝備/使用互動（背包內操作）
 - [ ] NPC 商店系統（買賣物品）
 - [ ] 角色職業選擇流程（目前預設無業遊民）
-- [ ] 存檔刪除功能
 - [ ] 存檔槽位已滿處理
 - [ ] 戰鬥中使用消耗品（目前戰鬥為全自動）

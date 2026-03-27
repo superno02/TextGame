@@ -59,6 +59,16 @@ struct GameView: View {
         .navigationTitle(engine.currentScene.name)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    engine.saveGame()
+                    engine.appendMessage("存檔完成。")
+                } label: {
+                    Image(systemName: "square.and.arrow.down")
+                }
+            }
+        }
         .sheet(isPresented: Binding(
             get: { engine.showMoveSheet },
             set: { engine.showMoveSheet = $0 }

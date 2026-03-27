@@ -1,6 +1,6 @@
 # ProjectOverview.md — 專案快速理解指南
 
-> 最後更新：2026-03-27（JSON ID 流水號前綴化）
+> 最後更新：2026-03-27（新增手動存檔按鈕）
 > 目標：讓新工程師在 5 分鐘內理解此專案
 
 ---
@@ -27,7 +27,7 @@ TextGame 是一款 **iOS 平台的純文字 MUD 風格角色扮演遊戲**，參
 | 角色屬性顯示 | ✅ 已完成 | 六大屬性 + 三大狀態值，正確對應當前存檔角色 |
 | 技能頁面 | ✅ 已完成 | 按 4 大分類顯示技能、等級、經驗值進度條 |
 | 背包頁面 | ✅ 已完成 | 裝備欄（7 部位）+ 背包物品列表 |
-| 存檔 / 讀檔 | ✅ 已完成 | 5 個槽位，離開前景自動存檔 |
+| 存檔 / 讀檔 | ✅ 已完成 | 5 個槽位，離開前景自動存檔 + 手動存檔按鈕，支援左滑刪除存檔（含確認） |
 | 遊戲引擎 | ✅ 已完成 | GameEngine（@Observable）管理場景、對話、攻擊、存檔 |
 | 錯誤處理 | ✅ 已完成 | JSON 載入錯誤於訊息區顯示 |
 | 單元測試 | ✅ 已完成 | 86 個 Swift Testing 測試案例（全通過） |
@@ -84,7 +84,7 @@ StartView（開始頁面）
 
 1. **靜態資料**：JSON 檔案 → `*TemplateLoader`（Singleton，App 啟動時自動載入，具備 loadError）→ GameEngine / View 查詢使用。掉落物定義獨立於 `loot_tables.json`，怪物透過 `lootTableId` 引用
 2. **動態資料**：SwiftData `@Model` ↔ GameEngine（透過 ModelContext / FetchDescriptor）↔ View
-3. **存檔機制**：`scenePhase` 變為 `.inactive` 時 → GameEngine.saveGame()
+3. **存檔機制**：`scenePhase` 變為 `.inactive` 時自動存檔 + toolbar 手動存檔按鈕 → GameEngine.saveGame()
 
 ---
 

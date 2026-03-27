@@ -1,6 +1,6 @@
 # ImportantFlows.md — 重要流程文件
 
-> 最後更新：2026-03-27（JSON ID 流水號前綴化）
+> 最後更新：2026-03-27（新增手動存檔按鈕）
 
 ---
 
@@ -102,7 +102,7 @@ GameView(slotIndex: emptySlot)
 顯示 loadSaveSheet（.sheet）
   │
   ├─ 列出 5 個槽位
-  │   ├─ 有存檔 → 顯示角色名 + 存檔時間 → 可點擊
+  │   ├─ 有存檔 → 顯示角色名 + 存檔時間 → 可點擊 / 可左滑刪除
   │   └─ 空槽位 → 顯示「空」→ 不可點擊
   │
   ▼
@@ -119,6 +119,38 @@ navigationDestination 觸發 → GameView(slotIndex:)
 GameEngine 初始化
   ├─ FetchDescriptor<SaveSlot> 查詢對應存檔
   └─ 恢復 character.currentSceneId
+```
+
+### 刪除存檔子流程
+
+```
+使用者在存檔槽位上左滑（swipeActions）
+  │
+  ▼
+顯示紅色「刪除」按鈕
+  │
+  ▼
+使用者點擊「刪除」
+  │
+  ├─ slotToDelete = slot
+  ├─ showDeleteConfirmation = true
+  │
+  ▼
+顯示確認 Alert（"確定要刪除槽位 N 的存檔「角色名」嗎？"）
+  │
+  ├─ 使用者點擊「取消」→ 關閉 Alert → 結束
+  │
+  ├─ 使用者點擊「刪除」
+  │   │
+  │   ▼
+  │   deleteSaveSlot(slot)
+  │     ├─ modelContext.delete(slot)
+  │     │   └─ cascade → 自動刪除關聯的 PlayerCharacter（含 Skill、GameItem）
+  │     ├─ modelContext.save()
+  │     └─ slotToDelete = nil
+  │
+  ▼
+@Query 自動更新 → 槽位顯示為「空」
 ```
 
 ---
@@ -313,12 +345,12 @@ engine.talkToNPC(npc)
 
 ---
 
-## 8. Auto Save Flow（自動存檔流程）
+## 8. Save Flow（存檔流程）
 
 ### 相關 Class
 `GameView` → `GameEngine` → `SaveSlot` → `PlayerCharacter`
 
-### 流程說明
+### 自動存檔
 
 ```
 App 進入非活躍狀態
@@ -336,6 +368,24 @@ engine.saveGame()
   │   ├─ 更新角色名稱、職業、等階
   │   └─ 更新存檔時間（Date()）
   └─ modelContext.save()
+```
+
+### 手動存檔
+
+```
+使用者點擊 toolbar 右上角存檔按鈕（square.and.arrow.down）
+  │
+  ▼
+engine.saveGame()
+  │
+  ├─ FetchDescriptor 取得 currentSaveSlot
+  ├─ slot.updateSaveInfo(character:, playTime:)
+  │   ├─ 更新角色名稱、職業、等階
+  │   └─ 更新存檔時間（Date()）
+  └─ modelContext.save()
+  │
+  ▼
+engine.appendMessage("存檔完成。")
 ```
 
 ---
