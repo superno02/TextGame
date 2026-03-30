@@ -53,6 +53,19 @@ final class PlayerCharacter {
     // MARK: - 目前位置
     var currentSceneId: String
 
+    // MARK: - NPC 好感度
+    var npcAffinity: [String: Int] = [:]   // [NPC ID: 好感度值]
+
+    /// 取得對指定 NPC 的好感度
+    func affinity(for npcId: String) -> Int {
+        npcAffinity[npcId] ?? 0
+    }
+
+    /// 增減指定 NPC 的好感度
+    func changeAffinity(for npcId: String, by amount: Int) {
+        npcAffinity[npcId, default: 0] += amount
+    }
+
     // MARK: - 戰鬥輔助屬性
 
     /// 目前裝備的武器

@@ -84,13 +84,14 @@ struct GameView: View {
         .sheet(isPresented: Binding(
             get: { engine.showTalkSheet },
             set: { engine.showTalkSheet = $0 }
-        ), onDismiss: {
-            // 談話彈窗關閉後，若有待開啟的商店則開啟
-            if engine.currentShopNPC != nil {
+        )) {
+            talkSheet(engine: engine)
+        }
+        .onChange(of: engine.isInDialogue) { wasInDialogue, isNowInDialogue in
+            // 對話結束後，若有待開啟的商店則開啟
+            if wasInDialogue && !isNowInDialogue && engine.currentShopNPC != nil {
                 engine.showShopSheet = true
             }
-        }) {
-            talkSheet(engine: engine)
         }
         .sheet(isPresented: Binding(
             get: { engine.showShopSheet },
@@ -136,6 +137,20 @@ struct GameView: View {
     // MARK: - 操作按鈕
 
     private func actionButtonsView(engine: GameEngine) -> some View {
+        Group {
+            if engine.isInDialogue {
+                dialogueOptionsView(engine: engine)
+            } else {
+                normalActionButtons(engine: engine)
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground))
+    }
+
+    // MARK: - 正常操作按鈕
+
+    private func normalActionButtons(engine: GameEngine) -> some View {
         VStack(spacing: 12) {
             // 第一排：移動、攻擊、談話
             HStack(spacing: 12) {
@@ -189,8 +204,70 @@ struct GameView: View {
                 }
             }
         }
-        .padding()
-        .background(Color(.systemBackground))
+    }
+
+    // MARK: - 對話選項區域
+
+    private func dialogueOptionsView(engine: GameEngine) -> some View {
+        VStack(spacing: 8) {
+            // NPC 回應文字
+            if let response = engine.currentNPCResponse {
+                Text("「\(response)」")
+                    .font(.system(.callout, design: .monospaced))
+                    .foregroundColor(.green)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 4)
+                    .padding(.bottom, 4)
+            }
+
+            // 對話選項列表（ScrollView 處理數量不固定）
+            ScrollView {
+                VStack(spacing: 8) {
+                    ForEach(engine.currentDialogueOptions) { option in
+                        Button {
+                            engine.selectDialogueOption(option)
+                        } label: {
+                            HStack {
+                                Text(option.label)
+                                    .font(.system(.callout, design: .monospaced))
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                if option.action == DialogueAction.openShop.rawValue {
+                                    Image(systemName: "bag.fill")
+                                        .foregroundColor(.yellow)
+                                        .font(.caption)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 12)
+                            .background(Color(.secondarySystemGroupedBackground))
+                            .cornerRadius(8)
+                        }
+                    }
+
+                    // 結束對話按鈕（始終顯示）
+                    Button {
+                        engine.endDialogue()
+                    } label: {
+                        HStack {
+                            Text("結束對話")
+                                .font(.system(.callout, design: .monospaced))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Image(systemName: "xmark.circle")
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 12)
+                        .background(Color(.secondarySystemGroupedBackground))
+                        .cornerRadius(8)
+                    }
+                }
+            }
+            .frame(maxHeight: 200)
+        }
     }
 
     // MARK: - 按鈕元件
@@ -281,7 +358,7 @@ struct GameView: View {
         NavigationStack {
             List(engine.availableNPCs) { npc in
                 Button {
-                    engine.talkToNPC(npc)
+                    engine.startDialogue(with: npc)
                     engine.showTalkSheet = false
                 } label: {
                     HStack {

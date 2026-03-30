@@ -7,16 +7,44 @@
             "description": "一位白髮蒼蒼的老人，臉上刻滿了歲月的痕跡。他是這個村莊最受敬重的人物。",
             "icon": "person.fill",
             "type": "questGiver",
-            "dialogues": [
+            "dialogueRoot": [
                 {
                     "id": "greeting",
-                    "text": "年輕人，歡迎來到我們的村莊。這裡雖然不大，但也是個安身立命的好地方。",
-                    "condition": null
-                },
-                {
-                    "id": "advice",
-                    "text": "如果你想磨練自己的本事，可以去後山看看。那裡有些小動物，適合新手練習。",
-                    "condition": null
+                    "label": "向長老請安",
+                    "response": "年輕人，歡迎來到我們的村莊。這裡雖然不大，但也是個安身立命的好地方。",
+                    "options": [
+                        {
+                            "id": "ask_advice",
+                            "label": "有什麼建議嗎？",
+                            "response": "如果你想磨練自己的本事，可以去後山看看。那裡有些小動物，適合新手練習。",
+                            "options": [
+                                {
+                                    "id": "ask_more",
+                                    "label": "還有其他地方可以去嗎？",
+                                    "response": "村口外面有條林間小路，不過那裡偶爾會有野豬出沒，小心點。市集那邊有賣裝備的，出發前記得去看看。",
+                                    "action": "endDialogue"
+                                },
+                                {
+                                    "id": "thanks_advice",
+                                    "label": "謝謝，我知道了",
+                                    "response": "去吧，路上小心。",
+                                    "action": "endDialogue"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "ask_village",
+                            "label": "這個村莊有什麼故事？",
+                            "response": "這個村莊已經有上百年的歷史了。以前這裡是個熱鬧的商路驛站，後來商路改道，村子就漸漸安靜下來了。",
+                            "action": "endDialogue"
+                        },
+                        {
+                            "id": "end_elder",
+                            "label": "告辭了",
+                            "response": "路上小心，年輕人。",
+                            "action": "endDialogue"
+                        }
+                    ]
                 }
             ],
             "shopItems": [],
@@ -29,16 +57,44 @@
             "description": "一個背著碩大背包的商人，他的眼中閃爍著精明的光芒。據說他走遍了大陸的每個角落。",
             "icon": "bag.fill",
             "type": "merchant",
-            "dialogues": [
+            "dialogueRoot": [
                 {
                     "id": "greeting",
-                    "text": "嘿，來看看我的好東西吧！都是從各地蒐集來的珍品。",
-                    "condition": null
-                },
-                {
-                    "id": "farewell",
-                    "text": "下次再來光顧啊！我經常在這附近走動。",
-                    "condition": null
+                    "label": "和商人攀談",
+                    "response": "嘿，來看看我的好東西吧！都是從各地蒐集來的珍品。",
+                    "options": [
+                        {
+                            "id": "open_shop",
+                            "label": "看看你有什麼貨",
+                            "response": "隨便看，隨便挑！",
+                            "action": "openShop"
+                        },
+                        {
+                            "id": "ask_travels",
+                            "label": "你都去過什麼地方？",
+                            "response": "哈哈，天南地北哪裡都去過。不過最近我聽說河對岸的沼澤那邊不太平靜，你要是有膽量倒可以去看看。",
+                            "options": [
+                                {
+                                    "id": "open_shop_after_chat",
+                                    "label": "先看看你的貨物吧",
+                                    "response": "好嘞！",
+                                    "action": "openShop"
+                                },
+                                {
+                                    "id": "end_chat",
+                                    "label": "好的，下次再來",
+                                    "response": "下次再來光顧啊！我經常在這附近走動。",
+                                    "action": "endDialogue"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "end_merchant",
+                            "label": "先不了，只是路過",
+                            "response": "下次再來光顧啊！我經常在這附近走動。",
+                            "action": "endDialogue"
+                        }
+                    ]
                 }
             ],
             "shopItems": [
@@ -55,16 +111,64 @@
             "description": "一個身材魁梧的中年人，赤裸的上臂滿是燒傷的痕跡。他正在熟練地敲打著鐵砧上的金屬。",
             "icon": "hammer.fill",
             "type": "merchant",
-            "dialogues": [
+            "dialogueRoot": [
                 {
                     "id": "greeting",
-                    "text": "需要武器嗎？我打的劍可是這一帶最好的！",
-                    "condition": null
+                    "label": "打個招呼",
+                    "response": "需要武器嗎？我打的劍可是這一帶最好的！",
+                    "options": [
+                        {
+                            "id": "open_shop",
+                            "label": "看看你的貨物",
+                            "response": "請隨便看！",
+                            "action": "openShop"
+                        },
+                        {
+                            "id": "ask_craft",
+                            "label": "你做鐵匠多久了？",
+                            "response": "二十多年了。從小跟著師父學，手上的傷疤比你走過的路還多。好武器是用汗水和鮮血打出來的！",
+                            "options": [
+                                {
+                                    "id": "open_shop_after_craft",
+                                    "label": "讓我看看你的得意之作",
+                                    "response": "好眼力！來看看吧。",
+                                    "action": "openShop"
+                                },
+                                {
+                                    "id": "end_craft",
+                                    "label": "受教了",
+                                    "response": "需要的時候再來找我！",
+                                    "action": "endDialogue"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "end_blacksmith",
+                            "label": "先不了",
+                            "response": "需要的時候再來找我！",
+                            "action": "endDialogue"
+                        }
+                    ]
                 },
                 {
                     "id": "warrior_greeting",
-                    "text": "喔，是戰士啊！我這裡有些適合你的好東西。",
-                    "condition": "guild:05_02_warrior"
+                    "label": "以戰士身份攀談",
+                    "response": "喔，是戰士啊！我這裡有些適合你的好東西。",
+                    "condition": "guild:05_02_warrior",
+                    "options": [
+                        {
+                            "id": "warrior_shop",
+                            "label": "讓我看看",
+                            "response": "那把戰士巨劍可是我的得意之作，好好看看！",
+                            "action": "openShop"
+                        },
+                        {
+                            "id": "warrior_end",
+                            "label": "改天再來",
+                            "response": "隨時歡迎！",
+                            "action": "endDialogue"
+                        }
+                    ]
                 }
             ],
             "shopItems": [
@@ -83,11 +187,44 @@
             "description": "一個披著草綠色斗篷的老婦人，身上散發著各種草藥混合的氣味。她的攤位上擺滿了瓶瓶罐罐。",
             "icon": "cross.vial.fill",
             "type": "merchant",
-            "dialogues": [
+            "dialogueRoot": [
                 {
                     "id": "greeting",
-                    "text": "來來來，看看我的藥水。不管是治傷還是恢復魔力，我這裡都有。",
-                    "condition": null
+                    "label": "和藥婆搭話",
+                    "response": "來來來，看看我的藥水。不管是治傷還是恢復魔力，我這裡都有。",
+                    "options": [
+                        {
+                            "id": "open_shop",
+                            "label": "看看有什麼藥水",
+                            "response": "都是老身親手調配的，品質保證！",
+                            "action": "openShop"
+                        },
+                        {
+                            "id": "ask_herbs",
+                            "label": "這些藥水怎麼做的？",
+                            "response": "嘿嘿，這可是祖傳秘方。不過告訴你也無妨——後山有不少藥草，沼澤那邊的蛙毒腺也是好東西。",
+                            "options": [
+                                {
+                                    "id": "open_shop_herbs",
+                                    "label": "那先買些藥水備著",
+                                    "response": "聰明的年輕人！",
+                                    "action": "openShop"
+                                },
+                                {
+                                    "id": "end_herbs",
+                                    "label": "原來如此，謝了",
+                                    "response": "不客氣，有需要再來。",
+                                    "action": "endDialogue"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "end_potion",
+                            "label": "暫時不需要",
+                            "response": "冒險可不能沒有藥水啊，想清楚了再來。",
+                            "action": "endDialogue"
+                        }
+                    ]
                 }
             ],
             "shopItems": [
@@ -104,11 +241,44 @@
             "description": "一個手指佈滿繭的男人，正在仔細地縫製一件皮革護甲。他的攤位上掛滿了各式防具。",
             "icon": "shield.fill",
             "type": "merchant",
-            "dialogues": [
+            "dialogueRoot": [
                 {
                     "id": "greeting",
-                    "text": "好的防具能救你一命！來看看我的貨色吧。",
-                    "condition": null
+                    "label": "和皮匠攀談",
+                    "response": "好的防具能救你一命！來看看我的貨色吧。",
+                    "options": [
+                        {
+                            "id": "open_shop",
+                            "label": "看看你的防具",
+                            "response": "我手工縫製的皮甲，耐用又輕便！",
+                            "action": "openShop"
+                        },
+                        {
+                            "id": "ask_armor",
+                            "label": "什麼防具最適合新手？",
+                            "response": "皮甲是最基本的，輕便又不妨礙行動。頭盔和靴子也別忘了，全身防護才安心。",
+                            "options": [
+                                {
+                                    "id": "open_shop_armor",
+                                    "label": "那就看看你有什麼",
+                                    "response": "來吧！",
+                                    "action": "openShop"
+                                },
+                                {
+                                    "id": "end_armor",
+                                    "label": "我先想想",
+                                    "response": "好防具不等人啊！",
+                                    "action": "endDialogue"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "end_armor_merchant",
+                            "label": "只是看看",
+                            "response": "好防具不等人啊！",
+                            "action": "endDialogue"
+                        }
+                    ]
                 }
             ],
             "shopItems": [
@@ -126,16 +296,38 @@
             "description": "一個穿著簡陋鎧甲的年輕人，手持長矛站在村口。雖然看起來有些緊張，但態度十分認真。",
             "icon": "shield.lefthalf.filled",
             "type": "guard",
-            "dialogues": [
+            "dialogueRoot": [
                 {
                     "id": "greeting",
-                    "text": "注意安全，村外的路上偶爾會有野獸出沒。",
-                    "condition": null
-                },
-                {
-                    "id": "warning",
-                    "text": "前面的林間小路最近出現了野豬，如果實力不夠的話要小心。",
-                    "condition": null
+                    "label": "和守衛聊聊",
+                    "response": "注意安全，村外的路上偶爾會有野獸出沒。",
+                    "options": [
+                        {
+                            "id": "ask_danger",
+                            "label": "外面危險嗎？",
+                            "response": "前面的林間小路最近出現了野豬，如果實力不夠的話要小心。後山倒是比較安全，只有些兔子和雞。",
+                            "options": [
+                                {
+                                    "id": "ask_further",
+                                    "label": "更遠的地方呢？",
+                                    "response": "深山裡有灰狼和山賊，可不是鬧著玩的。沒有好裝備千萬別去。",
+                                    "action": "endDialogue"
+                                },
+                                {
+                                    "id": "end_danger",
+                                    "label": "我會小心的",
+                                    "response": "那就好，祝你平安。",
+                                    "action": "endDialogue"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "end_guard",
+                            "label": "知道了，謝謝",
+                            "response": "嗯，注意安全。",
+                            "action": "endDialogue"
+                        }
+                    ]
                 }
             ],
             "shopItems": [],
@@ -148,21 +340,97 @@
             "description": "一個衣衫襤褸卻氣質不凡的老者，盤坐在一塊巨石上。他的眼神深邃，彷彿能看穿一切。",
             "icon": "figure.mind.and.body",
             "type": "trainer",
-            "dialogues": [
+            "dialogueRoot": [
                 {
                     "id": "greeting",
-                    "text": "能找到這裡來，說明你有些本事。想學點什麼嗎？",
-                    "condition": null
+                    "label": "上前搭話",
+                    "response": "能找到這裡來，說明你有些本事。想學點什麼嗎？",
+                    "options": [
+                        {
+                            "id": "hermit_shop",
+                            "label": "你這裡有什麼東西？",
+                            "response": "我這裡有一根木杖，也許你用得上。",
+                            "action": "openShop"
+                        },
+                        {
+                            "id": "ask_wisdom",
+                            "label": "能教我些什麼？",
+                            "response": "修行的路沒有捷徑。多與怪物搏鬥，多使用你的技能，熟練度自然會提升。",
+                            "action": "endDialogue"
+                        },
+                        {
+                            "id": "hermit_end",
+                            "label": "打擾了",
+                            "response": "去吧，有緣再會。",
+                            "action": "endDialogue"
+                        }
+                    ]
                 },
                 {
                     "id": "mage_greeting",
-                    "text": "我感受到你身上有魔力的波動……你是法師吧？我可以教你一些進階的技巧。",
-                    "condition": "guild:05_03_mage"
+                    "label": "展現魔力波動",
+                    "response": "我感受到你身上有魔力的波動……你是法師吧？我可以教你一些進階的技巧。",
+                    "condition": "guild:05_03_mage",
+                    "options": [
+                        {
+                            "id": "mage_teach",
+                            "label": "請指教",
+                            "response": "魔力的奧秘在於精準控制。回去多練習聚能和調諧吧。",
+                            "options": [
+                                {
+                                    "id": "mage_shop",
+                                    "label": "你有適合法師的裝備嗎？",
+                                    "response": "這根木杖或許適合你。",
+                                    "action": "openShop"
+                                },
+                                {
+                                    "id": "mage_end",
+                                    "label": "我會記住的",
+                                    "response": "去吧，勤加修練。",
+                                    "action": "endDialogue"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "mage_leave",
+                            "label": "改天再來請教",
+                            "response": "隨時歡迎。",
+                            "action": "endDialogue"
+                        }
+                    ]
                 },
                 {
                     "id": "cleric_greeting",
-                    "text": "信仰之力……你是一位牧師。也許我能幫你領悟更深層的智慧。",
-                    "condition": "guild:05_05_cleric"
+                    "label": "以信仰之力回應",
+                    "response": "信仰之力……你是一位牧師。也許我能幫你領悟更深層的智慧。",
+                    "condition": "guild:05_05_cleric",
+                    "options": [
+                        {
+                            "id": "cleric_teach",
+                            "label": "願聞其詳",
+                            "response": "智慧不只來自書本，也來自對萬物的理解。去沼澤走走吧，那裡有許多值得觀察的生命。",
+                            "options": [
+                                {
+                                    "id": "cleric_shop",
+                                    "label": "有什麼能幫助修行的嗎？",
+                                    "response": "我這裡有根木杖，對施法有些幫助。",
+                                    "action": "openShop"
+                                },
+                                {
+                                    "id": "cleric_end",
+                                    "label": "感謝指點",
+                                    "response": "去吧，願信仰指引你。",
+                                    "action": "endDialogue"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "cleric_leave",
+                            "label": "我先去歷練一番",
+                            "response": "去吧，歷練即是修行。",
+                            "action": "endDialogue"
+                        }
+                    ]
                 }
             ],
             "shopItems": [
@@ -177,21 +445,44 @@
             "description": "一個皮膚黝黑、滿臉風霜的老漁夫，粗糙的雙手正熟練地修補漁網。他對這一帶的水路瞭若指掌。",
             "icon": "ferry.fill",
             "type": "info",
-            "dialogues": [
+            "dialogueRoot": [
                 {
                     "id": "greeting",
-                    "text": "嘿，外地人！過河要小心，最近河對岸不太平靜。",
-                    "condition": null
-                },
-                {
-                    "id": "swamp_warning",
-                    "text": "沼澤那邊可別亂闖，毒蛙和蜥蜴到處都是。更深處還有巨蟒出沒，沒有點本事的話還是回頭吧。",
-                    "condition": null
-                },
-                {
-                    "id": "ruins_rumor",
-                    "text": "聽說沼澤盡頭有座古代廢墟，裡面的石像會動！你信嗎？反正我是不敢去。",
-                    "condition": null
+                    "label": "和渡船夫聊聊",
+                    "response": "嘿，外地人！過河要小心，最近河對岸不太平靜。",
+                    "options": [
+                        {
+                            "id": "ask_swamp",
+                            "label": "沼澤那邊怎麼了？",
+                            "response": "沼澤那邊可別亂闖，毒蛙和蜥蜴到處都是。更深處還有巨蟒出沒，沒有點本事的話還是回頭吧。",
+                            "options": [
+                                {
+                                    "id": "ask_ruins",
+                                    "label": "沼澤盡頭有什麼？",
+                                    "response": "聽說沼澤盡頭有座古代廢墟，裡面的石像會動！你信嗎？反正我是不敢去。",
+                                    "action": "endDialogue"
+                                },
+                                {
+                                    "id": "end_swamp",
+                                    "label": "我會小心的",
+                                    "response": "小心駛得萬年船啊。",
+                                    "action": "endDialogue"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "ask_ruins_direct",
+                            "label": "聽說有座古代廢墟？",
+                            "response": "聽說沼澤盡頭有座古代廢墟，裡面的石像會動！你信嗎？反正我是不敢去。",
+                            "action": "endDialogue"
+                        },
+                        {
+                            "id": "end_ferryman",
+                            "label": "多謝提醒",
+                            "response": "不客氣，注意安全。",
+                            "action": "endDialogue"
+                        }
+                    ]
                 }
             ],
             "shopItems": [],
@@ -204,21 +495,64 @@
             "description": "一個身形魁梧的女戰士，臉上有一道觸目驚心的刀疤。她的眼神銳利，渾身散發著百戰老兵的氣場。",
             "icon": "shield.lefthalf.filled",
             "type": "merchant",
-            "dialogues": [
+            "dialogueRoot": [
                 {
                     "id": "greeting",
-                    "text": "想活命的話，裝備不能馬虎。看看我這裡的貨，都是實戰中用得上的好東西。",
-                    "condition": null
+                    "label": "向隊長搭話",
+                    "response": "想活命的話，裝備不能馬虎。看看我這裡的貨，都是實戰中用得上的好東西。",
+                    "options": [
+                        {
+                            "id": "open_shop",
+                            "label": "看看你的裝備",
+                            "response": "都是戰場上驗證過的好貨！",
+                            "action": "openShop"
+                        },
+                        {
+                            "id": "ask_mine",
+                            "label": "礦坑裡有什麼？",
+                            "response": "礦坑裡的骷髏戰士不是鬧著玩的，進去之前確保你的裝備夠硬。那些不死的傢伙又堅又難纏。",
+                            "options": [
+                                {
+                                    "id": "open_shop_mine",
+                                    "label": "那先看看裝備吧",
+                                    "response": "這才是聰明的選擇！",
+                                    "action": "openShop"
+                                },
+                                {
+                                    "id": "end_mine",
+                                    "label": "我再考慮考慮",
+                                    "response": "別考慮太久，死人可不需要裝備。",
+                                    "action": "endDialogue"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "end_captain",
+                            "label": "只是路過",
+                            "response": "哼，弱者的藉口。",
+                            "action": "endDialogue"
+                        }
+                    ]
                 },
                 {
                     "id": "warrior_greeting",
-                    "text": "喔？同行啊。戰士之間不用多說廢話，挑你需要的吧。",
-                    "condition": "guild:05_02_warrior"
-                },
-                {
-                    "id": "mine_warning",
-                    "text": "礦坑裡的骷髏戰士不是鬧著玩的，進去之前確保你的裝備夠硬。",
-                    "condition": null
+                    "label": "以戰士身份攀談",
+                    "response": "喔？同行啊。戰士之間不用多說廢話，挑你需要的吧。",
+                    "condition": "guild:05_02_warrior",
+                    "options": [
+                        {
+                            "id": "warrior_shop",
+                            "label": "看看你的家當",
+                            "response": "長矛和鎖子甲，都是好東西。",
+                            "action": "openShop"
+                        },
+                        {
+                            "id": "warrior_end",
+                            "label": "改天再來",
+                            "response": "隨時歡迎，同行。",
+                            "action": "endDialogue"
+                        }
+                    ]
                 }
             ],
             "shopItems": [
@@ -237,21 +571,77 @@
             "description": "一個身披暗色斗篷的神秘人物，面容隱藏在兜帽的陰影中。他靜靜地佇立在廢墟入口，彷彿已經等待了很長的時間。",
             "icon": "eye.fill",
             "type": "merchant",
-            "dialogues": [
+            "dialogueRoot": [
                 {
                     "id": "greeting",
-                    "text": "……你能走到這裡，說明你有一定的實力。我這裡有些東西，也許對你有用。",
-                    "condition": null
+                    "label": "上前探問",
+                    "response": "……你能走到這裡，說明你有一定的實力。我這裡有些東西，也許對你有用。",
+                    "options": [
+                        {
+                            "id": "open_shop",
+                            "label": "看看你有什麼",
+                            "response": "……看吧。",
+                            "action": "openShop"
+                        },
+                        {
+                            "id": "ask_lore",
+                            "label": "這座廢墟是什麼地方？",
+                            "response": "這座廢墟曾是古代法師的神殿。那些石像守衛，至今仍在執行千年前的命令……",
+                            "options": [
+                                {
+                                    "id": "ask_deeper",
+                                    "label": "裡面還有什麼？",
+                                    "response": "暗影刺客……他們是被黑暗吞噬的前探險者。如果你在陰影中看到什麼在動，別猶豫，先出手。",
+                                    "options": [
+                                        {
+                                            "id": "open_shop_lore",
+                                            "label": "有什麼能幫我對抗它們的嗎？",
+                                            "response": "也許吧。",
+                                            "action": "openShop"
+                                        },
+                                        {
+                                            "id": "end_deeper",
+                                            "label": "我會注意的",
+                                            "response": "……祝你好運。",
+                                            "action": "endDialogue"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "id": "end_lore",
+                                    "label": "聽起來很危險",
+                                    "response": "……確實。",
+                                    "action": "endDialogue"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "end_watcher",
+                            "label": "……告辭",
+                            "response": "……",
+                            "action": "endDialogue"
+                        }
+                    ]
                 },
                 {
                     "id": "thief_greeting",
-                    "text": "盜賊嗎……這把暗影之刃，是用這廢墟中的暗影碎片鍛造的。只有像你這樣的人才配使用它。",
-                    "condition": "guild:05_04_thief"
-                },
-                {
-                    "id": "lore",
-                    "text": "這座廢墟曾是古代法師的神殿。那些石像守衛，至今仍在執行千年前的命令……",
-                    "condition": null
+                    "label": "暗中接近守望者",
+                    "response": "盜賊嗎……這把暗影之刃，是用這廢墟中的暗影碎片鍛造的。只有像你這樣的人才配使用它。",
+                    "condition": "guild:05_04_thief",
+                    "options": [
+                        {
+                            "id": "thief_shop",
+                            "label": "讓我看看那把刃",
+                            "response": "……拿去吧，善用它。",
+                            "action": "openShop"
+                        },
+                        {
+                            "id": "thief_end",
+                            "label": "有趣……改天再來",
+                            "response": "……我會在這裡。",
+                            "action": "endDialogue"
+                        }
+                    ]
                 }
             ],
             "shopItems": [

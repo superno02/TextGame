@@ -1,6 +1,6 @@
 # ImportantFlows.md — 重要流程文件
 
-> 最後更新：2026-03-27（新增物品交易系統）
+> 最後更新：2026-03-30（對話系統改造：樹狀對話、NPC 好感度）
 
 ---
 
@@ -319,7 +319,7 @@ handlePlayerDefeat()
 ## 7. NPC Talk Flow（NPC 對話流程）
 
 ### 相關 Class
-`GameView` → `GameEngine` → `SceneTemplateLoader` → `NPCTemplateLoader` → `NPCTemplate`
+`GameView` → `GameEngine` → `SceneTemplateLoader` → `NPCTemplateLoader` → `NPCTemplate` → `DialogueNode` → `DialogueContext` → `PlayerCharacter`
 
 ### 流程說明
 
@@ -333,29 +333,93 @@ handlePlayerDefeat()
 engine.showTalkSheet = true → 列出 NPC（名稱 + 頭銜）
   │
   ▼
-使用者選擇 NPC
+使用者選擇 NPC → 關閉 talkSheet
   │
   ▼
-engine.talkToNPC(npc)
+engine.startDialogue(with: npc)
   │
-  ├─ 取得玩家職業（currentSaveSlot?.character?.guild）
-  ├─ npc.availableDialogues(playerGuild:) → 過濾條件對話
-  │   ├─ condition == nil → 無條件顯示
-  │   └─ condition == "guild:05_02_warrior" → 僅戰士可觸發
+  ├─ 建構 DialogueContext（guild、circle、inventoryItemIds、npcAffinity）
+  ├─ npc.availableRootOptions(context:) → 過濾根選項
+  │   ├─ evaluateCondition() 判斷每個根節點的 condition
+  │   │   ├─ nil → 無條件通過
+  │   │   ├─ "guild:05_02_warrior" → 職業匹配
+  │   │   ├─ "circle:3" → 等階 >= 3
+  │   │   ├─ "item:01_01_iron_sword" → 持有指定物品
+  │   │   └─ "affinity:10" → 好感度 >= 10
+  │   └─ 回傳符合條件的根選項列表
+  │
+  ├─ 設定對話狀態：
+  │   ├─ currentTalkNPC = npc
+  │   ├─ currentDialogueOptions = 過濾後的根選項
+  │   └─ currentNPCResponse = nil（初始無回應）
   │
   ├─ appendMessage("你向【NPC名】搭話。")
-  ├─ 若無可用對話 → "沒有說話。"
-  ├─ 若有對話 → 隨機選擇一段顯示
-  │
-  ├─ 檢查 NPC 是否為商人（npc.shopItems?.isEmpty == false）
-  │   ├─ 是 → currentShopNPC = npc（暫存，等 talkSheet dismiss 後開啟商店）
-  │   └─ 否 → 結束
   │
   ▼
-GameView talkSheet.onDismiss
-  ├─ currentShopNPC != nil？
-  │   ├─ 是 → showShopSheet = true（開啟商店介面）
-  │   └─ 否 → 結束
+GameView 偵測 engine.isInDialogue == true
+  │
+  ▼
+下半部操作區切換為 dialogueOptionsView
+  │
+  ├─ 顯示 NPC 回應文字（currentNPCResponse，若有）
+  ├─ 列出對話選項按鈕（currentDialogueOptions）
+  │   └─ openShop 動作的選項旁顯示商店圖示
+  └─ 永遠顯示「結束對話」按鈕
+```
+
+### 對話選項處理子流程
+
+```
+使用者點擊對話選項
+  │
+  ▼
+engine.selectDialogueOption(option)
+  │
+  ├─ appendMessage("▸ {option.label}")（玩家選擇）
+  ├─ appendMessage("{NPC名}：{option.response}")（NPC 回應）
+  ├─ currentNPCResponse = option.response
+  ├─ character.changeAffinity(for: npc.id, by: 1)（好感度 +1）
+  │
+  ├─ 檢查 option.action：
+  │   ├─ "endDialogue" → endDialogue() → 結束
+  │   ├─ "openShop" → currentShopNPC = npc → endDialogue()
+  │   │   └─ GameView onChange(of: isInDialogue) → showShopSheet = true
+  │   └─ nil → 繼續處理子選項
+  │
+  ├─ 檢查 option.goto：
+  │   ├─ 有值 → npc.findNode(byId: goto) → 跳轉到目標節點
+  │   │   └─ 顯示目標節點的子選項（過濾條件後）
+  │   └─ nil → 顯示當前節點的子選項
+  │
+  ├─ npc.availableOptions(for: targetNode, context:) → 過濾子選項
+  │   ├─ 子選項非空 → 更新 currentDialogueOptions
+  │   └─ 子選項為空 → 自動 endDialogue()（葉節點）
+  │
+  ▼
+dialogueOptionsView 更新顯示新選項
+```
+
+### 結束對話子流程
+
+```
+使用者點擊「結束對話」按鈕 / 自動結束（葉節點 / endDialogue 動作）
+  │
+  ▼
+engine.endDialogue()
+  │
+  ├─ currentTalkNPC = nil
+  ├─ currentDialogueOptions = []
+  ├─ currentNPCResponse = nil
+  │
+  ▼
+GameView 偵測 engine.isInDialogue == false
+  │
+  ├─ 下半部還原為正常操作按鈕
+  │
+  ├─ onChange(of: isInDialogue) 觸發：
+  │   ├─ engine.currentShopNPC != nil？
+  │   │   ├─ 是 → showShopSheet = true（開啟商店）
+  │   │   └─ 否 → 結束
 ```
 
 ---
@@ -587,13 +651,15 @@ GameEngine.init() 中統一檢查所有 loadError
 ### 流程說明
 
 ```
-NPC 對話流程觸發商店（見 §7）
+NPC 對話中選擇 openShop 動作（見 §7）
   │
   ▼
-talkSheet dismiss → engine.currentShopNPC != nil
+engine.selectDialogueOption() → action == "openShop"
+  ├─ currentShopNPC = npc
+  └─ endDialogue()
   │
   ▼
-engine.showShopSheet = true
+GameView onChange(of: isInDialogue) → showShopSheet = true
   │
   ▼
 ShopView（.sheet, presentationDetents: [.medium, .large]）

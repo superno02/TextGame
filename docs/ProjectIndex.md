@@ -1,6 +1,6 @@
 # TextGame 專案索引
 
-> 最後更新：2026-03-27（文件分拆：CombatStats→Combat/Equipment/Monsters）
+> 最後更新：2026-03-30（對話系統改造：樹狀對話、NPC 好感度）
 
 ## 文檔導覽
 
@@ -74,7 +74,7 @@
 | 檔案 | 用途 |
 |------|------|
 | `TextGameApp.swift` | App 進入點，啟動時顯示 StartView，設定 SwiftData ModelContainer |
-| `Engine/GameEngine.swift` | 遊戲引擎（@Observable），管理訊息、場景、攻擊、對話、商店交易、存檔等邏輯 |
+| `Engine/GameEngine.swift` | 遊戲引擎（@Observable），管理訊息、場景、攻擊、樹狀對話、商店交易、存檔等邏輯 |
 | `Views/StartView.swift` | 遊戲開始頁面，提供「開始遊戲」與「讀取存檔」選項，支援左滑刪除存檔 |
 | `Views/GameView.swift` | 遊戲主畫面（純 UI 層），初始化 Engine 並轉發操作，含手動存檔按鈕 |
 | `Views/SkillView.swift` | 技能頁面，按 4 大分類顯示角色技能與熟練度進度條 |
@@ -82,7 +82,7 @@
 | `Views/ShopView.swift` | 商店頁面，購買/出售分頁，顯示金幣餘額、商品價格與庫存 |
 | `Views/StatusView.swift` | 屬性頁面，顯示角色基本資訊、六大屬性、三大狀態值與金幣 |
 | `Models/Enums.swift` | 列舉定義：職業(Guild)、技能分類(SkillCategory)、技能類型(SkillType)、裝備欄位(EquipmentSlot) |
-| `Models/PlayerCharacter.swift` | 玩家角色 Model，從 GuildTemplateLoader 取得初始屬性，含技能與背包關聯、經驗值與等階升級 |
+| `Models/PlayerCharacter.swift` | 玩家角色 Model，從 GuildTemplateLoader 取得初始屬性，含技能與背包關聯、經驗值與等階升級、NPC 好感度 |
 | `Models/Skill.swift` | 技能 Model，含技能類型、等級、經驗值與實戰經驗吸收機制 |
 | `Models/GameScene.swift` | 場景運行時結構，定義場景描述、出口列表 |
 | `Models/GameItem.swift` | 物品 Model，含類型、數值屬性、裝備功能與使用條件判斷 |
@@ -90,7 +90,7 @@
 | `Models/SceneTemplate.swift` | 場景模板與 SceneTemplateLoader（Singleton） |
 | `Models/LootTableTemplate.swift` | 掉落表模板與 LootTableLoader（Singleton），定義掉落物品、機率與數量範圍 |
 | `Models/MonsterTemplate.swift` | 怪物模板與 MonsterTemplateLoader（Singleton），透過 lootTableId 引用掉落表 |
-| `Models/NPCTemplate.swift` | NPC 模板與 NPCTemplateLoader（Singleton），含條件對話過濾 |
+| `Models/NPCTemplate.swift` | NPC 模板與 NPCTemplateLoader（Singleton），含樹狀對話節點（DialogueNode）、條件評估（guild/circle/item/affinity）、DialogueContext |
 | `Models/ItemTemplate.swift` | 物品模板與 ItemTemplateLoader（Singleton） |
 | `Models/GuildTemplate.swift` | 職業模板與 GuildTemplateLoader（Singleton），含 StatusFormula、CircleGrowth |
 
@@ -124,7 +124,7 @@
 | `SkillTests.swift` | 經驗吸收、升級、分類、公式 | 9 |
 | `GameItemTests.swift` | 使用條件、堆疊、裝備 | 9 |
 | `TemplateLoaderTests.swift` | 6 個 Loader 載入驗證 | 15 |
-| `NPCTemplateTests.swift` | 條件對話、商人判定 | 6 |
+| `NPCTemplateTests.swift` | 樹狀對話條件過濾、商人判定、goto 搜尋、openShop 動作驗證、條件評估（guild/circle/item/affinity）、DialogueNode JSON 解碼 | 15 |
 | `CombatTests.swift` | 戰鬥公式、命中/閃避/傷害計算、CombatMonster、武器技能映射 | 26 |
 | `TradeTests.swift` | 交易價格計算（購買價、出售價、交易技能加成、角色初始金幣） | 11 |
 
@@ -156,8 +156,8 @@
 - [x] InventoryView 完整實作（7 個裝備部位 + 背包物品列表）
 - [x] StatusView 完整實作（基本資訊、六大屬性、三大狀態值）
 - [x] 6 個 TemplateLoader 新增 loadError 追蹤，GameEngine 啟動時統一檢查
-- [x] NPC 談話功能（條件式對話過濾）
-- [x] 單元測試 97 個（Swift Testing 框架）
+- [x] NPC 談話功能（條件式對話過濾） → 已改造為樹狀多輪對話系統
+- [x] 單元測試 106 個（Swift Testing 框架）
 - [x] 技術文件 10 份（docs/ 資料夾）
 - [x] 戰鬥系統實作（回合制自動戰鬥、命中/閃避/傷害公式、掉落物、死亡處理）
 - [x] 技能使用與經驗值獲取（戰鬥中自動觸發武器/防具/閃避技能經驗）
@@ -197,6 +197,14 @@
 - [x] 新增進階商人 NPC（傭兵隊長、廢墟守望者）與情報 NPC（渡船夫）
 - [x] 盜賊專用★★★武器（暗影之刃）
 - [x] weaponSkillType 新增長矛→劍術、暗影之刃→匕首映射
+- [x] 對話系統改造：樹狀多輪對話（DialogueNode 巢狀結構，取代扁平 NPCDialogue）
+- [x] 對話條件擴充：支援 guild / circle / item / affinity 四種條件觸發
+- [x] 對話 goto 跳轉（同 NPC 內跳轉到指定節點 ID）
+- [x] 對話動作系統（openShop 開啟商店、endDialogue 結束對話）
+- [x] NPC 好感度系統（PlayerCharacter.npcAffinity，每次對話 +1，影響對話選項可見性）
+- [x] GameView 對話模式 UI（下半部操作區動態切換：正常模式 ↔ 對話模式）
+- [x] npcs.json 全部 10 個 NPC 遷移至 dialogueRoot 樹狀結構
+- [x] NPCTemplateTests 重寫 + 新增（6 → 15 個測試案例）
 
 ### 待開發
 - [ ] 物品裝備/使用互動（背包內操作）

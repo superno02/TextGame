@@ -1,6 +1,6 @@
 # Modules.md — 功能模組分析
 
-> 最後更新：2026-03-27（世界內容擴充：河谷→沼澤→廢墟區域）
+> 最後更新：2026-03-30（對話系統改造：樹狀對話、NPC 好感度）
 
 ---
 
@@ -49,7 +49,7 @@ TextGame
 | **功能說明** | 管理所有遊戲邏輯狀態，與 View 層分離 |
 | **主要 Class** | `GameEngine`（`@Observable`） |
 | **主要檔案** | `Engine/GameEngine.swift` |
-| **模組責任** | 訊息管理、場景移動、戰鬥系統、經驗值授予與升級處理、NPC 對話、商店交易、存檔觸發、模板載入錯誤檢查 |
+| **模組責任** | 訊息管理、場景移動、戰鬥系統、經驗值授予與升級處理、樹狀 NPC 對話（多輪互動、好感度）、商店交易、存檔觸發、模板載入錯誤檢查 |
 | **與其他模組的關係** | 持有 `ModelContext`；依賴 `SceneTemplateLoader`、`MonsterTemplateLoader`、`NPCTemplateLoader`、`ItemTemplateLoader`、`LootTableLoader`；操作 `SaveSlot`、`PlayerCharacter`；被 `GameView` 初始化與使用 |
 
 ### 主要屬性
@@ -58,6 +58,10 @@ TextGame
 - `showMoveSheet / showAttackSheet / showTalkSheet: Bool` — 彈窗控制
 - `isInCombat: Bool` — 戰鬥狀態標記
 - `combatMonster: CombatMonster?` — 當前戰鬥中的怪物實例
+- `currentTalkNPC: NPCTemplate?` — 當前對話中的 NPC
+- `currentDialogueOptions: [DialogueNode]` — 當前顯示的對話選項
+- `currentNPCResponse: String?` — NPC 最新回應文字
+- `isInDialogue: Bool` — 是否在對話中（計算屬性）
 - `showShopSheet: Bool` — 商店介面顯示控制
 - `currentShopNPC: NPCTemplate?` — 當前商店 NPC
 - `npcStocks: [String: [String: Int]]` — NPC 庫存運行時追蹤（場景切換時重置）
@@ -73,7 +77,9 @@ TextGame
 - `processLoot(monster:character:)` — 掉落物處理（查詢 LootTableLoader，支援數量範圍）
 - `grantArmorSkillExperience(...)` — 防具技能經驗發放
 - `absorbCombatSkills(...)` — 回合結束吸收技能經驗
-- `talkToNPC(_ npc:)` — NPC 對話（含條件過濾），商人 NPC 談話後設定 currentShopNPC
+- `startDialogue(with npc:)` — 開始對話（建構 DialogueContext、過濾根選項、設定對話狀態）
+- `selectDialogueOption(_ option:)` — 選擇對話選項（好感度 +1、處理 action/goto/子選項）
+- `endDialogue()` — 結束對話（清空對話狀態）
 - `buyItem(from:shopItem:)` — 購買物品（扣金幣、扣庫存、加背包）
 - `sellItem(to:item:)` — 出售物品（加金幣、移除物品、交易技能經驗）
 - `shopItemsForNPC(_:)` — 回傳 NPC 可購買商品列表（含價格、庫存）
@@ -111,8 +117,8 @@ TextGame
 | **功能說明** | 遊戲核心互動畫面，包含訊息輸出與操作按鈕 |
 | **主要 Class** | `GameView` |
 | **主要檔案** | `Views/GameView.swift` |
-| **模組責任** | UI 渲染、將使用者操作轉發給 GameEngine、訊息顏色判斷 |
-| **與其他模組的關係** | 初始化並持有 `GameEngine`（`@State`）；導航至 SkillView / InventoryView / StatusView（傳入 character）；掛載 ShopView（`.sheet`） |
+| **模組責任** | UI 渲染、將使用者操作轉發給 GameEngine、訊息顏色判斷、下半部操作區動態切換（正常模式 ↔ 對話模式） |
+| **與其他模組的關係** | 初始化並持有 `GameEngine`（`@State`）；導航至 SkillView / InventoryView / StatusView（傳入 character）；掛載 ShopView（`.sheet`）；監聽 `engine.isInDialogue` 控制商店開啟 |
 
 ### 3.3 SkillView
 
@@ -168,7 +174,7 @@ TextGame
 |------|------|
 | **功能說明** | 玩家角色核心資料 |
 | **主要檔案** | `Models/PlayerCharacter.swift` |
-| **責任** | 儲存角色基本資訊（名稱、職業、等階）、六大屬性、三大狀態值、經驗值、金幣、目前位置；提供戰鬥輔助計算屬性與升級機制 |
+| **責任** | 儲存角色基本資訊（名稱、職業、等階）、六大屬性、三大狀態值、經驗值、金幣、NPC 好感度、目前位置；提供戰鬥輔助計算屬性與升級機制 |
 | **初始化** | 從 `GuildTemplateLoader` 取得 `baseStats` 設定屬性，使用 `StatusFormula` 計算狀態值，具備 fallback |
 | **關聯** | `@Relationship` → `[Skill]`（技能列表）、`[GameItem]`（背包物品） |
 | **經驗值屬性** | `experience: Int`（持久化）、`experienceToNextCircle: Int`（`@Transient`，公式：circle × 50 + 50） |
@@ -233,7 +239,10 @@ TextGame
 |------|------|
 | **功能說明** | NPC 定義與載入 |
 | **主要檔案** | `Models/NPCTemplate.swift` |
-| **責任** | 從 `npcs.json` 載入 NPC 資料；支援條件式對話過濾、商人篩選 |
+| **責任** | 從 `npcs.json` 載入 NPC 資料；提供樹狀對話結構（`DialogueNode`）、條件評估（`evaluateCondition`）、商人篩選 |
+| **資料結構** | `DialogueNode`（巢狀對話節點，含 label / response / condition / action / goto / options）、`DialogueContext`（條件評估上下文）、`DialogueAction` enum、`NPCShopItem` |
+| **條件系統** | 支援 `guild:`（職業）、`circle:`（等階）、`item:`（持有物品）、`affinity:`（NPC 好感度）四種條件 |
+| **查詢方法** | `availableRootOptions(context:)`（根選項過濾）、`availableOptions(for:context:)`（子選項過濾）、`findNode(byId:)`（遞迴搜尋，用於 goto） |
 | **JSON 資料** | 10 個 NPC：村長老伯、旅行商人、鐵匠老張、藥婆、皮匠阿福、守衛阿強、隱居老者、渡船夫老吳、傭兵隊長、廢墟守望者 |
 
 ### 5.4 ItemTemplate / ItemTemplateLoader
@@ -289,7 +298,7 @@ TextGame
 | `items.json` | `01_` | 物品模板（屬性、修正、條件） | 30 種物品 |
 | `monsters.json` | `02_` | 怪物定義（屬性、lootTableId、出沒場景） | 13 種怪物 |
 | `scenes.json` | `03_` | 場景定義（名稱、描述、出口、怪物、NPC） | 11 個場景 |
-| `npcs.json` | `04_` | NPC 定義（對話、商店、服務類型） | 10 個 NPC |
+| `npcs.json` | `04_` | NPC 定義（樹狀對話 dialogueRoot、商店、服務類型） | 10 個 NPC |
 | `guilds.json` | `05_` | 職業定義（屬性、技能、公式） | 5 種職業 |
 | `loot_tables.json` | `06_` | 掉落表定義（物品、機率、數量範圍） | 11 張掉落表 |
 
@@ -305,7 +314,7 @@ TextGame
 | `SkillTests.swift` | 經驗吸收、升級、技能分類、顯示名稱 | 9 |
 | `GameItemTests.swift` | 使用條件、堆疊判斷、裝備部位 | 9 |
 | `TemplateLoaderTests.swift` | 6 個 Loader 載入驗證、資料查詢 | 15 |
-| `NPCTemplateTests.swift` | 條件對話過濾、商人判定 | 6 |
+| `NPCTemplateTests.swift` | 樹狀對話條件過濾、商人判定、goto 搜尋、openShop 動作驗證、條件評估（guild/circle/item/affinity）、DialogueNode JSON 解碼 | 15 |
 | `CombatTests.swift` | 戰鬥公式（命中/閃避/傷害 clamping）、CombatMonster 狀態、角色戰鬥屬性、武器技能映射 | 26 |
 | `TradeTests.swift` | 交易價格計算（購買價、出售價、交易技能加成、角色初始金幣） | 11 |
-| **合計** | | **97（不含 UI 測試）** |
+| **合計** | | **106（不含 UI 測試）** |

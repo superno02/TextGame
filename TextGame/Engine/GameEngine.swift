@@ -107,6 +107,22 @@ final class GameEngine {
     var isInCombat: Bool = false
     private var combatMonster: CombatMonster?
 
+    // MARK: - 對話狀態
+
+    /// 當前正在對話的 NPC 模板
+    var currentTalkNPC: NPCTemplate?
+
+    /// 當前顯示的對話選項列表
+    var currentDialogueOptions: [DialogueNode] = []
+
+    /// 當前 NPC 剛說的回應（用於 UI 顯示在選項上方）
+    var currentNPCResponse: String?
+
+    /// 是否正在對話中
+    var isInDialogue: Bool {
+        currentTalkNPC != nil
+    }
+
     // MARK: - 商店狀態
 
     var showShopSheet = false
@@ -499,27 +515,86 @@ final class GameEngine {
         }
     }
 
-    // MARK: - NPC 對話
+    // MARK: - 對話系統
 
-    func talkToNPC(_ npc: NPCTemplate) {
-        let playerGuild = currentSaveSlot?.character?.guild
-        let dialogues = npc.availableDialogues(playerGuild: playerGuild)
+    /// 開始與 NPC 對話
+    func startDialogue(with npc: NPCTemplate) {
+        guard let character = currentSaveSlot?.character else { return }
+
+        let context = DialogueContext(character: character, npcId: npc.id)
+        let rootOptions = npc.availableRootOptions(context: context)
 
         appendMessage("——————————")
         appendMessage("你向【\(npc.name)】搭話。")
 
-        if dialogues.isEmpty {
+        if rootOptions.isEmpty {
             appendMessage("\(npc.name)看了你一眼，沒有說話。")
-        } else {
-            if let dialogue = dialogues.randomElement() {
-                appendMessage("「\(dialogue.text)」")
+            return
+        }
+
+        currentTalkNPC = npc
+        currentNPCResponse = nil
+        currentDialogueOptions = rootOptions
+    }
+
+    /// 玩家選擇一個對話選項
+    func selectDialogueOption(_ node: DialogueNode) {
+        guard let npc = currentTalkNPC,
+              let character = currentSaveSlot?.character else { return }
+
+        let context = DialogueContext(character: character, npcId: npc.id)
+
+        // 顯示玩家選擇與 NPC 回應到訊息區
+        appendMessage("你：「\(node.label)」")
+        appendMessage("「\(node.response)」")
+
+        // 好感度 +1（選擇非結束對話的選項時）
+        if node.action != DialogueAction.endDialogue.rawValue {
+            character.changeAffinity(for: npc.id, by: 1)
+        }
+
+        // 檢查特殊動作
+        if let actionStr = node.action, let action = DialogueAction(rawValue: actionStr) {
+            switch action {
+            case .endDialogue:
+                endDialogue()
+                return
+            case .openShop:
+                currentShopNPC = npc
+                endDialogue()
+                return
             }
         }
 
-        // 如果是商人，標記待開啟商店（由 View 在 talkSheet dismiss 後觸發）
-        if npc.isMerchant {
-            currentShopNPC = npc
+        // 處理 goto 跳轉
+        if let gotoId = node.goto {
+            if let targetNode = npc.findNode(byId: gotoId) {
+                currentNPCResponse = targetNode.response
+                let childOptions = npc.availableOptions(for: targetNode, context: context)
+                if childOptions.isEmpty {
+                    endDialogue()
+                } else {
+                    currentDialogueOptions = childOptions
+                }
+                return
+            }
         }
+
+        // 顯示下一層子選項
+        let childOptions = npc.availableOptions(for: node, context: context)
+        currentNPCResponse = node.response
+        if childOptions.isEmpty {
+            endDialogue()
+        } else {
+            currentDialogueOptions = childOptions
+        }
+    }
+
+    /// 結束對話
+    func endDialogue() {
+        currentTalkNPC = nil
+        currentDialogueOptions = []
+        currentNPCResponse = nil
     }
 
     // MARK: - 商店系統
