@@ -24,4 +24,4 @@
 
 ## 開發規範
 
-- 代碼開發規範依照 `ios-developer.md` 的內容執行
+- 代碼開發規範依照 `ios-developer` skill 的內容執行（位於 `.claude/skills/ios-developer/SKILL.md`）
